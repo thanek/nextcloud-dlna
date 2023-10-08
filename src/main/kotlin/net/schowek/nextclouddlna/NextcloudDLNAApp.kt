@@ -4,8 +4,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class NextcloudDlnaApplication
+class NextcloudDLNAApp
 
 fun main(args: Array<String>) {
-	runApplication<NextcloudDlnaApplication>(*args)
+	runApplication<NextcloudDLNAApp>(*args)
 }

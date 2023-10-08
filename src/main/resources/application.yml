@@ -1,0 +1,18 @@
+server:
+  port: 8080
+  interface: eth0
+  friendlyName: NC-DLNA!
+
+nextcloud:
+  filesDir: /path/to/your/nextcloud/dir/ending/with/data
+
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/nextcloud
+    username: nextcloud
+    password: nextcloud
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+

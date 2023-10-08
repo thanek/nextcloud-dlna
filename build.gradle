@@ -5,6 +5,7 @@ plugins {
 	id 'io.spring.dependency-management' version '1.1.3'
 	id 'org.jetbrains.kotlin.jvm' version '1.8.22'
 	id 'org.jetbrains.kotlin.plugin.spring' version '1.8.22'
+	id "org.jetbrains.kotlin.plugin.jpa" version '1.8.22'
 }
 
 group = 'net.schowek'
@@ -22,6 +23,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.mariadb.jdbc:mariadb-java-client:3.2.0'
+
+	implementation 'org.jupnp:org.jupnp:2.7.1'
+	implementation 'org.jupnp:org.jupnp.support:2.7.1'
+	implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
