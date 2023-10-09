@@ -3,18 +3,19 @@ package net.schowek.nextclouddlna.dlna.transport
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
+import net.schowek.nextclouddlna.util.Logging
 import org.jupnp.model.message.Connection
 import org.jupnp.transport.Router
 import org.jupnp.transport.spi.InitializationException
 import org.jupnp.transport.spi.StreamServer
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
 
-class MyStreamServerImpl(private val configuration: MyStreamServerConfiguration) :
-    StreamServer<MyStreamServerConfiguration> {
+class MyStreamServerImpl(
+    private val configuration: MyStreamServerConfiguration
+) : Logging, StreamServer<MyStreamServerConfiguration> {
     protected var server: HttpServer? = null
 
     @Synchronized
@@ -94,10 +95,6 @@ class MyStreamServerImpl(private val configuration: MyStreamServerConfiguration)
         override fun getLocalAddress(): InetAddress? {
             return if (exchange.localAddress != null) exchange.localAddress.address else null
         }
-    }
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(MyStreamServerImpl::class.java)
     }
 }
 

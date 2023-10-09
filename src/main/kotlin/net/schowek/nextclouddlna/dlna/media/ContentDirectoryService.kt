@@ -1,6 +1,7 @@
 package net.schowek.nextclouddlna.dlna.media
 
 import net.schowek.nextclouddlna.nextcloud.content.ContentTreeProvider
+import net.schowek.nextclouddlna.util.Logging
 import org.jupnp.support.contentdirectory.AbstractContentDirectoryService
 import org.jupnp.support.contentdirectory.ContentDirectoryErrorCode
 import org.jupnp.support.contentdirectory.ContentDirectoryException
@@ -12,7 +13,6 @@ import org.jupnp.support.model.DIDLContent
 import org.jupnp.support.model.SortCriterion
 import org.jupnp.support.model.container.Container
 import org.jupnp.support.model.item.Item
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.TimeUnit.NANOSECONDS
@@ -22,11 +22,10 @@ import java.util.concurrent.TimeUnit.NANOSECONDS
 class ContentDirectoryService(
     private val contentTreeProvider: ContentTreeProvider,
     private val nodeConverter: NodeConverter
-) :
-    AbstractContentDirectoryService(
-        mutableListOf("dc:title", "upnp:class"),  // also "dc:creator", "dc:date", "res@size"
-        mutableListOf("dc:title")
-    ) {
+) : AbstractContentDirectoryService(
+    mutableListOf("dc:title", "upnp:class"),  // also "dc:creator", "dc:date", "res@size"
+    mutableListOf("dc:title")
+), Logging {
 
     /**
      * Root is requested with objectID="0".
@@ -65,26 +64,20 @@ class ContentDirectoryService(
             }
             BrowseResult(DIDLParser().generate(DIDLContent()), 0, 0)
         } catch (e: Exception) {
-            LOG.warn(
-                String.format(
-                    "Failed to generate directory listing" +
-                            " (objectID=%s, browseFlag=%s, filter=%s, firstResult=%s, maxResults=%s, orderby=%s).",
-                    objectID, browseFlag, filter, firstResult, maxResults, Arrays.toString(orderby)
-                ), e
+            logger.warn(
+                "Failed to generate directory listing (objectID={}, browseFlag={}, filter={}, firstResult={}, maxResults={}, orderby={}).",
+                objectID, browseFlag, filter, firstResult, maxResults, Arrays.toString(orderby), e
             )
             throw ContentDirectoryException(ContentDirectoryErrorCode.CANNOT_PROCESS, e.toString())
         } finally {
-            LOG.info(
+            logger.info(
                 "Browse: {} ({}, {}) in {}ms.",
-                objectID, firstResult, maxResults,
-                NANOSECONDS.toMillis(System.nanoTime() - startTime)
+                objectID, firstResult, maxResults, NANOSECONDS.toMillis(System.nanoTime() - startTime)
             )
         }
     }
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(ContentDirectoryService::class.java)
-
         @Throws(Exception::class)
         private fun toRangedResult(
             containers: List<Container>,

@@ -1,14 +1,13 @@
 package net.schowek.nextclouddlna.dlna.transport
 
 import io.micrometer.common.util.StringUtils
+import net.schowek.nextclouddlna.util.Logging
 import org.jupnp.model.message.StreamRequestMessage
 import org.jupnp.model.message.StreamResponseMessage
 import org.jupnp.model.message.UpnpMessage
-import org.slf4j.LoggerFactory
 
 
-object StreamsLoggerHelper {
-    private val LOGGER = LoggerFactory.getLogger(StreamsLoggerHelper::class.java)
+object StreamsLoggerHelper : Logging {
     private const val HTTPSERVER_REQUEST_BEGIN =
         "================================== HTTPSERVER REQUEST BEGIN ====================================="
     private const val HTTPSERVER_REQUEST_END =
@@ -30,7 +29,7 @@ object StreamsLoggerHelper {
         val formattedRequest = getFormattedRequest(requestMessage)
         val formattedHeaders = getFormattedHeaders(requestMessage)
         val formattedBody = getFormattedBody(requestMessage)
-        LOGGER.trace(
+        logger.trace(
             "Received a request from {}:\n{}\n{}{}{}{}",
             requestMessage.connection.remoteAddress.hostAddress,
             HTTPSERVER_REQUEST_BEGIN,
@@ -45,7 +44,7 @@ object StreamsLoggerHelper {
         val formattedResponse = getFormattedResponse(responseMessage)
         val formattedHeaders = getFormattedHeaders(responseMessage)
         val formattedBody = getFormattedBody(responseMessage)
-        LOGGER.trace(
+        logger.trace(
             "Send a response to {}:\n{}\n{}{}{}{}",
             requestMessage.connection.remoteAddress.hostAddress,
             HTTPSERVER_RESPONSE_BEGIN,
@@ -60,7 +59,7 @@ object StreamsLoggerHelper {
         val formattedRequest = getFormattedRequest(requestMessage)
         val formattedHeaders = getFormattedHeaders(requestMessage)
         val formattedBody = getFormattedBody(requestMessage)
-        LOGGER.trace(
+        logger.trace(
             "Send a request to {}:\n{}\n{}{}{}{}",
             requestMessage.uri.host,
             HTTPCLIENT_REQUEST_BEGIN,
@@ -75,7 +74,7 @@ object StreamsLoggerHelper {
         val formattedResponse = getFormattedResponse(responseMessage)
         val formattedHeaders = getFormattedHeaders(responseMessage)
         val formattedBody = getFormattedBody(responseMessage)
-        LOGGER.trace(
+        logger.trace(
             "Received a response from {}:\n{}\n{}{}{}{}",
             requestMessage?.uri?.host,
             HTTPCLIENT_RESPONSE_BEGIN,
@@ -109,7 +108,7 @@ object StreamsLoggerHelper {
                 }
             }
         }
-        if (headers.length > 0) {
+        if (headers.isNotEmpty()) {
             headers.insert(0, "\nHEADER:\n")
         }
         return headers.toString()
@@ -120,7 +119,8 @@ object StreamsLoggerHelper {
         //message.isBodyNonEmptyString throw StringIndexOutOfBoundsException if string is empty
         try {
             val bodyNonEmpty = message.body != null &&
-                    (message.body is String && (message.body as String).length > 0 || message.body is ByteArray && (message.body as ByteArray).size > 0)
+                    (message.body is String && (message.body as String).isNotEmpty()
+                            || message.body is ByteArray && (message.body as ByteArray).isNotEmpty())
             if (bodyNonEmpty && message.isBodyNonEmptyString) {
                 formattedBody = message.bodyString
             }

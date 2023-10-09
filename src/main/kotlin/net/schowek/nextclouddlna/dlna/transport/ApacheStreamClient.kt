@@ -1,5 +1,6 @@
 package net.schowek.nextclouddlna.dlna.transport
 
+import net.schowek.nextclouddlna.util.Logging
 import org.apache.http.*
 import org.apache.http.client.ResponseHandler
 import org.apache.http.client.config.RequestConfig
@@ -22,8 +23,6 @@ import org.jupnp.http.Headers
 import org.jupnp.model.message.*
 import org.jupnp.model.message.header.UpnpHeader
 import org.jupnp.transport.spi.AbstractStreamClient
-import org.jupnp.transport.spi.StreamClient
-import org.slf4j.LoggerFactory
 import java.nio.charset.Charset
 import java.nio.charset.UnsupportedCharsetException
 import java.util.concurrent.Callable
@@ -31,7 +30,7 @@ import java.util.concurrent.Callable
 
 class ApacheStreamClient(
     private val configuration: ApacheStreamClientConfiguration
-) : AbstractStreamClient<ApacheStreamClientConfiguration?, HttpRequestBase>() {
+) : Logging, AbstractStreamClient<ApacheStreamClientConfiguration?, HttpRequestBase>() {
     private val clientConnectionManager: PoolingHttpClientConnectionManager
     private val httpClient: CloseableHttpClient
 
@@ -143,8 +142,8 @@ class ApacheStreamClient(
         request: HttpRequestBase
     ): Callable<StreamResponseMessage> {
         return Callable<StreamResponseMessage> {
-            LOGGER.trace("Sending HTTP request: $requestMessage")
-            if (LOGGER.isTraceEnabled) {
+            logger.trace("Sending HTTP request: $requestMessage")
+            if (logger.isTraceEnabled) {
                 StreamsLoggerHelper.logStreamClientRequestMessage(requestMessage)
             }
             httpClient.execute<StreamResponseMessage>(request, createResponseHandler(requestMessage))
@@ -159,26 +158,26 @@ class ApacheStreamClient(
         if (t is IllegalStateException) {
             // TODO: Document when/why this happens and why we can ignore it, violating the
             // logging rules of the StreamClient#sendRequest() method
-            LOGGER.trace("Illegal state: " + t.message)
+            logger.trace("Illegal state: {}", t.message)
             return true
         } else if (t is NoHttpResponseException) {
-            LOGGER.trace("No Http Response: " + t.message)
+            logger.trace("No Http Response: {}", t.message)
             return true
         }
         return false
     }
 
     override fun stop() {
-        LOGGER.trace("Shutting down HTTP client connection manager/pool")
+        logger.trace("Shutting down HTTP client connection manager/pool")
         clientConnectionManager.shutdown()
     }
 
     private fun createHttpRequestEntity(upnpMessage: UpnpMessage<*>): HttpEntity {
         return if (upnpMessage.bodyType == UpnpMessage.BodyType.BYTES) {
-            LOGGER.trace("Preparing HTTP request entity as byte[]")
+            logger.trace("Preparing HTTP request entity as byte[]")
             ByteArrayEntity(upnpMessage.bodyBytes)
         } else {
-            LOGGER.trace("Preparing HTTP request entity as string")
+            logger.trace("Preparing HTTP request entity as string")
             var charset = upnpMessage.contentTypeCharset
             if (charset == null) {
                 charset = "UTF-8"
@@ -186,7 +185,7 @@ class ApacheStreamClient(
             try {
                 StringEntity(upnpMessage.bodyString, charset)
             } catch (ex: UnsupportedCharsetException) {
-                LOGGER.trace("HTTP request does not support charset: {}", charset)
+                logger.trace("HTTP request does not support charset: {}", charset)
                 throw RuntimeException(ex)
             }
         }
@@ -195,7 +194,7 @@ class ApacheStreamClient(
     private fun createResponseHandler(requestMessage: StreamRequestMessage?): ResponseHandler<StreamResponseMessage> {
         return ResponseHandler<StreamResponseMessage> { httpResponse: HttpResponse ->
             val statusLine = httpResponse.statusLine
-            LOGGER.trace("Received HTTP response: $statusLine")
+            logger.trace("Received HTTP response: $statusLine")
 
             // Status
             val responseOperation = UpnpResponse(statusLine.statusCode, statusLine.reasonPhrase)
@@ -209,22 +208,22 @@ class ApacheStreamClient(
             // Body
             val entity = httpResponse.entity
             if (entity == null || entity.contentLength == 0L) {
-                LOGGER.trace("HTTP response message has no entity")
+                logger.trace("HTTP response message has no entity")
                 return@ResponseHandler responseMessage
             }
             val data = EntityUtils.toByteArray(entity)
             if (data != null) {
                 if (responseMessage.isContentTypeMissingOrText) {
-                    LOGGER.trace("HTTP response message contains text entity")
+                    logger.trace("HTTP response message contains text entity")
                     responseMessage.setBodyCharacters(data)
                 } else {
-                    LOGGER.trace("HTTP response message contains binary entity")
+                    logger.trace("HTTP response message contains binary entity")
                     responseMessage.setBody(UpnpMessage.BodyType.BYTES, data)
                 }
             } else {
-                LOGGER.trace("HTTP response message has no entity")
+                logger.trace("HTTP response message has no entity")
             }
-            if (LOGGER.isTraceEnabled) {
+            if (logger.isTraceEnabled) {
                 StreamsLoggerHelper.logStreamClientResponseMessage(responseMessage, requestMessage)
             }
             responseMessage
@@ -232,7 +231,6 @@ class ApacheStreamClient(
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(StreamClient::class.java)
         private fun addHeaders(httpMessage: HttpMessage, headers: Headers) {
             for ((key, value1) in headers) {
                 for (value in value1) {

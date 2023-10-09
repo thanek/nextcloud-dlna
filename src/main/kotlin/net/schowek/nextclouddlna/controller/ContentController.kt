@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse
 import net.schowek.nextclouddlna.nextcloud.content.ContentGroup.*
 import net.schowek.nextclouddlna.nextcloud.content.ContentTreeProvider
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
+import net.schowek.nextclouddlna.util.Logging
 import org.jupnp.support.model.Protocol
 import org.jupnp.support.model.ProtocolInfo
 import org.jupnp.support.model.dlna.*
@@ -14,7 +15,6 @@ import org.jupnp.support.model.dlna.DLNAConversionIndicator.NONE
 import org.jupnp.support.model.dlna.DLNAFlags.*
 import org.jupnp.support.model.dlna.DLNAOperations.*
 import org.jupnp.support.model.dlna.DLNAProfiles.*
-import org.slf4j.LoggerFactory
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -25,9 +25,7 @@ import java.util.*
 @RestController
 class ContentController(
     private val contentTreeProvider: ContentTreeProvider
-) {
-    final val logger = LoggerFactory.getLogger(ContentController::class.java)
-
+) : Logging {
     @RequestMapping(method = [RequestMethod.GET, RequestMethod.HEAD], value = ["/c/{id}"])
     @ResponseBody
     fun getResource(

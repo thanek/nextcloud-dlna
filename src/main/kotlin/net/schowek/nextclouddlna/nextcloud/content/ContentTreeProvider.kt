@@ -2,7 +2,7 @@ package net.schowek.nextclouddlna.nextcloud.content
 
 import jakarta.annotation.PostConstruct
 import net.schowek.nextclouddlna.nextcloud.MediaDB
-import org.slf4j.LoggerFactory
+import net.schowek.nextclouddlna.util.Logging
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicInteger
@@ -12,10 +12,8 @@ import java.util.regex.Pattern
 @Component
 class ContentTreeProvider(
     private val mediaDB: MediaDB
-) {
-    final val logger = LoggerFactory.getLogger(ContentTreeProvider::class.java)
-
-    private var tree: ContentTree = buildContentTree()
+) : Logging {
+    private var tree = buildContentTree()
     private var lastMTime = 0L
 
     init {
@@ -24,7 +22,7 @@ class ContentTreeProvider(
 
     @PostConstruct
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 60)
-    fun rebuildTree() {
+    final fun rebuildTree() {
         val maxMtime: Long = mediaDB.maxMtime()
         if (lastMTime < maxMtime) {
             logger.info("ContentTree seems to be outdated - Loading...")

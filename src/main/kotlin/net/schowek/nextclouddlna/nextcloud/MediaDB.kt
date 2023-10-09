@@ -1,57 +1,38 @@
 package net.schowek.nextclouddlna.nextcloud
 
+import jakarta.annotation.PostConstruct
 import net.schowek.nextclouddlna.nextcloud.content.ContentItem
 import net.schowek.nextclouddlna.nextcloud.content.ContentNode
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
 import net.schowek.nextclouddlna.nextcloud.db.*
 import net.schowek.nextclouddlna.nextcloud.db.Filecache.Companion.FOLDER_MIME_TYPE
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import net.schowek.nextclouddlna.util.Logging
 import org.springframework.dao.InvalidDataAccessResourceUsageException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
 import java.util.function.Consumer
-import java.util.function.Predicate
-import kotlin.collections.HashMap
 
 
 @Component
 class MediaDB(
-    nextcloudConfig: NextcloudConfigDiscovery,
-    mimetypeRepository: MimetypeRepository,
-    filecacheRepository: FilecacheRepository,
-    groupFolderRepository: GroupFolderRepository
-) {
-    final var logger: Logger = LoggerFactory.getLogger(MediaDB::class.java)
-
-    private val appdataDir: String
-    private val thumbStorageId: Int
-    private val contentDir: String
-    private val supportsGroupFolders: Boolean
-    private val mimetypeRepository: MimetypeRepository
-    private val filecacheRepository: FilecacheRepository
+    private val nextcloudConfig: NextcloudConfigDiscovery,
+    private val mimetypeRepository: MimetypeRepository,
+    private val filecacheRepository: FilecacheRepository,
     private val groupFolderRepository: GroupFolderRepository
+) : Logging {
+    private val thumbStorageId: Int = filecacheRepository.findFirstByPath(nextcloudConfig.appDataDir).storage
+    private val mimetypes: Map<Int, String> = mimetypeRepository.findAll().associate { it.id to it.mimetype }
+    private val folderMimeType: Int = mimetypes.entries.find { it.value == FOLDER_MIME_TYPE }!!.key
     private val storageUsersMap: MutableMap<Int, String> = HashMap()
-    private val mimetypes: Map<Int, String>
-    private val folderMimeType: Int
 
-    init {
-        appdataDir = nextcloudConfig.appDataDir
-        contentDir = nextcloudConfig.nextcloudDir
-        supportsGroupFolders = nextcloudConfig.supportsGroupFolders
-        this.mimetypeRepository = mimetypeRepository
-        this.filecacheRepository = filecacheRepository
-        this.groupFolderRepository = groupFolderRepository
-        thumbStorageId = filecacheRepository.findFirstByPath(appdataDir).storage
+    @PostConstruct
+    fun init() {
         logger.info("Using thumbnail storage id: {}", thumbStorageId)
-        mimetypes = mimetypeRepository.findAll().associate { it.id to it.mimetype }
-        folderMimeType = mimetypes.entries.find { it.value == FOLDER_MIME_TYPE }!!.key
     }
 
     @Transactional(readOnly = true)
     fun processThumbnails(thumbConsumer: Consumer<ContentItem>) {
-        filecacheRepository.findThumbnails("$appdataDir/preview/%", thumbStorageId, folderMimeType).use { files ->
+        filecacheRepository.findThumbnails("${nextcloudConfig.appDataDir}/preview/%", thumbStorageId, folderMimeType).use { files ->
             files.map { f: Filecache -> asItem(f) }.forEach(thumbConsumer)
         }
     }
@@ -61,7 +42,7 @@ class MediaDB(
 
     fun groupFolders(): List<ContentNode> {
         when {
-            supportsGroupFolders -> {
+            nextcloudConfig.supportsGroupFolders -> {
                 try {
                     return groupFolderRepository.findAll().flatMap { g ->
                         filecacheRepository.findByPath("__groupfolders/" + g.id).map { f ->
@@ -114,9 +95,9 @@ class MediaDB(
     private fun buildPath(f: Filecache): String {
         return if (storageUsersMap.containsKey(f.storage)) {
             val userName: String? = storageUsersMap[f.storage]
-            contentDir + "/" + userName + "/" + f.path
+            nextcloudConfig.appDataDir + "/" + userName + "/" + f.path
         } else {
-            contentDir + "/" + f.path
+            nextcloudConfig.appDataDir + "/" + f.path
         }
     }
 }

@@ -1,7 +1,6 @@
 package net.schowek.nextclouddlna.util
 
 import jakarta.annotation.PostConstruct
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.net.*
@@ -11,8 +10,7 @@ import java.util.*
 class ServerInfoProvider(
     @param:Value("\${server.port}") val port: Int,
     @param:Value("\${server.interface}") private val networkInterface: String
-) {
-    var logger = LoggerFactory.getLogger(ServerInfoProvider::class.java)
+) : Logging {
     var address: InetAddress? = null
 
     @PostConstruct

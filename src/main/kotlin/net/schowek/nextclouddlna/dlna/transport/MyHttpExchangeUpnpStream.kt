@@ -1,11 +1,11 @@
 package net.schowek.nextclouddlna.dlna.transport
 
 import com.sun.net.httpserver.HttpExchange
+import net.schowek.nextclouddlna.util.Logging
 import org.jupnp.model.message.*
 import org.jupnp.protocol.ProtocolFactory
 import org.jupnp.transport.spi.UpnpStream
 import org.jupnp.util.io.IO
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -15,7 +15,7 @@ import java.net.HttpURLConnection
 abstract class MyHttpExchangeUpnpStream(
     protocolFactory: ProtocolFactory?,
     val httpExchange: HttpExchange
-) : UpnpStream(protocolFactory) {
+) : Logging, UpnpStream(protocolFactory) {
 
     override fun run() {
         try {
@@ -116,9 +116,5 @@ abstract class MyHttpExchangeUpnpStream(
     }
 
     protected abstract fun createConnection(): Connection?
-
-    companion object {
-        private val logger = LoggerFactory.getLogger(MyHttpExchangeUpnpStream::class.java)
-    }
 }
 

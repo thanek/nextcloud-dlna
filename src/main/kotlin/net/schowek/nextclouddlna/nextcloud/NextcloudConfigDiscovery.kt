@@ -1,7 +1,8 @@
 package net.schowek.nextclouddlna.nextcloud
 
+import jakarta.annotation.PostConstruct
 import net.schowek.nextclouddlna.nextcloud.db.AppConfigRepository
-import org.slf4j.LoggerFactory
+import net.schowek.nextclouddlna.util.Logging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
@@ -15,15 +16,12 @@ class NextcloudConfigDiscovery(
     @Value("\${nextcloud.filesDir}")
     val nextcloudDir: String,
     val appConfigRepository: AppConfigRepository
-) {
-    final var logger = LoggerFactory.getLogger(NextcloudConfigDiscovery::class.java)
+) : Logging {
+    final val appDataDir: String = findAppDataDir()
+    final val supportsGroupFolders: Boolean = checkGroupFoldersSupport()
 
-    final val appDataDir: String
-    final val supportsGroupFolders: Boolean
-
-    init {
-        appDataDir = findAppDataDir()
-        supportsGroupFolders = checkGroupFoldersSupport()
+    @PostConstruct
+    fun init() {
         logger.info("Found appdata dir: {}", appDataDir)
     }
 
