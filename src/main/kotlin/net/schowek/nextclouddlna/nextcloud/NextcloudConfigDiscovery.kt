@@ -12,7 +12,8 @@ import java.util.Objects.*
 
 @Component
 class NextcloudConfigDiscovery(
-    @Value("\${nextcloud.filesDir}") val nextcloudDir: String,
+    @Value("\${nextcloud.filesDir}")
+    val nextcloudDir: String,
     val appConfigRepository: AppConfigRepository
 ) {
     final var logger = LoggerFactory.getLogger(NextcloudConfigDiscovery::class.java)

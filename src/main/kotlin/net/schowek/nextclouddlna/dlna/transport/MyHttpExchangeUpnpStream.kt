@@ -60,7 +60,7 @@ abstract class MyHttpExchangeUpnpStream(
                 logger.debug("Request did not contain entity body")
             }
             if (bodyBytes.isNotEmpty()) {
-                logger.info(" Request body: " + requestMessage.body)
+                logger.debug(" Request body: " + requestMessage.body)
             }
             val responseMessage = process(requestMessage)
 
