@@ -10,6 +10,7 @@ import org.jupnp.DefaultUpnpServiceConfiguration
 import org.jupnp.UpnpServiceConfiguration
 import org.jupnp.UpnpServiceImpl
 import org.jupnp.protocol.ProtocolFactory
+import org.jupnp.protocol.ProtocolFactoryImpl
 import org.jupnp.registry.Registry
 import org.jupnp.transport.impl.NetworkAddressFactoryImpl
 import org.jupnp.transport.spi.NetworkAddressFactory
@@ -23,12 +24,10 @@ import java.net.NetworkInterface
 @Component
 class DlnaService(
     private val serverInfoProvider: ServerInfoProvider,
+    private val upnpServiceConfiguration: MyUpnpServiceConfiguration,
     private val mediaServer: MediaServer
 ) {
-    // Named this way cos NetworkAddressFactoryImpl has a bindAddresses field.
-    private val addressesToBind: List<InetAddress> = listOf(serverInfoProvider.address!!)
-
-    fun start() = MyUpnpService(MyUpnpServiceConfiguration()).also {
+    fun start() = MyUpnpService(upnpServiceConfiguration).also {
         it.startup()
         it.registry.addDevice(mediaServer.device)
     }
@@ -39,35 +38,8 @@ class DlnaService(
         override fun createRegistry(pf: ProtocolFactory): Registry {
             return RegistryImplWithOverrides(this)
         }
-    }
-
-    private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration(8081) {
-        override fun createStreamClient(): StreamClient<*> {
-            return ApacheStreamClient(
-                ApacheStreamClientConfiguration(syncProtocolExecutorService)
-            )
-        }
-
-        override fun createStreamServer(networkAddressFactory: NetworkAddressFactory): StreamServer<*> {
-            return MyStreamServerImpl(
-                MyStreamServerConfiguration(networkAddressFactory.streamListenPort)
-            )
-        }
-
-        override fun createNetworkAddressFactory(
-            streamListenPort: Int,
-            multicastResponsePort: Int
-        ): NetworkAddressFactory {
-            return MyNetworkAddressFactory(streamListenPort, multicastResponsePort)
-        }
-    }
-
-    inner class MyNetworkAddressFactory(
-        streamListenPort: Int,
-        multicastResponsePort: Int
-    ) : NetworkAddressFactoryImpl(streamListenPort, multicastResponsePort) {
-        override fun isUsableAddress(iface: NetworkInterface, address: InetAddress): Boolean {
-            return addressesToBind.contains(address)
+        override fun createProtocolFactory(): ProtocolFactory? {
+            return MyProtocolFactory(this)
         }
     }
 }

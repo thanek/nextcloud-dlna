@@ -23,14 +23,13 @@ class MediaServer(
     private val externalUrls: ExternalUrls
 ) {
     val device = LocalDevice(
-        DeviceIdentity(uniqueSystemIdentifier("DLNAtoad-MediaServer"), 300),
+        DeviceIdentity(uniqueSystemIdentifier("Nextcloud-DLNA-MediaServer"), 300),
         UDADeviceType(DEVICE_TYPE, VERSION),
         DeviceDetails(friendlyName, externalUrls.selfURI),
         createDeviceIcon(), arrayOf(contentDirectoryService, connectionManagerService)
     )
 
-    @PostConstruct
-    fun init() {
+    init {
         logger.info("uniqueSystemIdentifier: {} ({})", device.identity.udn, friendlyName)
     }
 
