@@ -19,7 +19,7 @@ class MediaDB(
     private val mimetypeRepository: MimetypeRepository,
     private val filecacheRepository: FilecacheRepository,
     private val groupFolderRepository: GroupFolderRepository
-)  {
+) {
     private val thumbStorageId: Int = filecacheRepository.findFirstByPath(nextcloudConfig.appDataDir).storage
     private val mimetypes: Map<Int, String> = mimetypeRepository.findAll().associate { it.id to it.mimetype }
     private val folderMimeType: Int = mimetypes.entries.find { it.value == FOLDER_MIME_TYPE }!!.key
@@ -32,9 +32,10 @@ class MediaDB(
 
     @Transactional(readOnly = true)
     fun processThumbnails(thumbConsumer: Consumer<ContentItem>) {
-        filecacheRepository.findThumbnails("${nextcloudConfig.appDataDir}/preview/%", thumbStorageId, folderMimeType).use { files ->
-            files.map { f: Filecache -> asItem(f) }.forEach(thumbConsumer)
-        }
+        filecacheRepository.findThumbnails("${nextcloudConfig.appDataDir}/preview/%", thumbStorageId, folderMimeType)
+            .use { files ->
+                files.map { f: Filecache -> asItem(f) }.forEach(thumbConsumer)
+            }
     }
 
     fun mainNodes(): List<ContentNode> =
@@ -95,12 +96,12 @@ class MediaDB(
     private fun buildPath(f: Filecache): String {
         return if (storageUsersMap.containsKey(f.storage)) {
             val userName: String? = storageUsersMap[f.storage]
-            nextcloudConfig.appDataDir + "/" + userName + "/" + f.path
+            "${nextcloudConfig.nextcloudDir}/$userName/${f.path}"
         } else {
-            nextcloudConfig.appDataDir + "/" + f.path
+            "${nextcloudConfig.nextcloudDir}/${f.path}"
         }
     }
 
-    companion object: KLogging()
+    companion object : KLogging()
 }
 

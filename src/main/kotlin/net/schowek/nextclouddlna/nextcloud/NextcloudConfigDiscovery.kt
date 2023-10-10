@@ -20,11 +20,6 @@ class NextcloudConfigDiscovery(
     final val appDataDir: String = findAppDataDir()
     final val supportsGroupFolders: Boolean = checkGroupFoldersSupport()
 
-    @PostConstruct
-    fun init() {
-        logger.info("Found appdata dir: {}", appDataDir)
-    }
-
     private fun checkGroupFoldersSupport(): Boolean {
         return "yes" == appConfigRepository.getValue("groupfolders", "enabled")
     }
@@ -33,6 +28,9 @@ class NextcloudConfigDiscovery(
         return stream(requireNonNull(File(nextcloudDir).listFiles { f ->
             f.isDirectory && f.name.matches(APPDATA_NAME_PATTERN.toRegex())
         })).findFirst().orElseThrow().name
+            .also {
+                logger.info { "Found appdata dir: $it" }
+            }
     }
 
     companion object : KLogging() {
