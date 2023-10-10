@@ -2,10 +2,10 @@ package net.schowek.nextclouddlna.controller
 
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.content.ContentGroup.*
 import net.schowek.nextclouddlna.nextcloud.content.ContentTreeProvider
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
-import net.schowek.nextclouddlna.util.Logging
 import org.jupnp.support.model.Protocol
 import org.jupnp.support.model.ProtocolInfo
 import org.jupnp.support.model.dlna.*
@@ -25,7 +25,7 @@ import java.util.*
 @RestController
 class ContentController(
     private val contentTreeProvider: ContentTreeProvider
-) : Logging {
+)  {
     @RequestMapping(method = [RequestMethod.GET, RequestMethod.HEAD], value = ["/c/{id}"])
     @ResponseBody
     fun getResource(
@@ -73,5 +73,6 @@ class ContentController(
         }
         return DLNAProtocolInfo(Protocol.HTTP_GET, ProtocolInfo.WILDCARD, mediaFormat.mime, attributes)
     }
+    companion object: KLogging()
 }
 

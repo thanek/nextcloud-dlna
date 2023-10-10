@@ -1,7 +1,7 @@
 package net.schowek.nextclouddlna.dlna.media
 
+import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.content.ContentTreeProvider
-import net.schowek.nextclouddlna.util.Logging
 import org.jupnp.support.contentdirectory.AbstractContentDirectoryService
 import org.jupnp.support.contentdirectory.ContentDirectoryErrorCode
 import org.jupnp.support.contentdirectory.ContentDirectoryException
@@ -25,7 +25,7 @@ class ContentDirectoryService(
 ) : AbstractContentDirectoryService(
     mutableListOf("dc:title", "upnp:class"),  // also "dc:creator", "dc:date", "res@size"
     mutableListOf("dc:title")
-), Logging {
+) {
 
     /**
      * Root is requested with objectID="0".
@@ -77,7 +77,7 @@ class ContentDirectoryService(
         }
     }
 
-    companion object {
+    companion object : KLogging() {
         @Throws(Exception::class)
         private fun toRangedResult(
             containers: List<Container>,

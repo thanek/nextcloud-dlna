@@ -5,7 +5,7 @@ import org.jupnp.transport.spi.StreamServerConfiguration
 class MyStreamServerConfiguration(
     private val listenPort: Int
 ) : StreamServerConfiguration {
-    var tcpConnectionBacklog = 0
+    val tcpConnectionBacklog = 0
     override fun getListenPort(): Int {
         return listenPort
     }

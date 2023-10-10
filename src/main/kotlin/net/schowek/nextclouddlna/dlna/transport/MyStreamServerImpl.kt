@@ -3,7 +3,7 @@ package net.schowek.nextclouddlna.dlna.transport
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
-import net.schowek.nextclouddlna.util.Logging
+import mu.KLogging
 import org.jupnp.model.message.Connection
 import org.jupnp.transport.Router
 import org.jupnp.transport.spi.InitializationException
@@ -15,14 +15,14 @@ import java.net.InetSocketAddress
 
 class MyStreamServerImpl(
     private val configuration: MyStreamServerConfiguration
-) : Logging, StreamServer<MyStreamServerConfiguration> {
-    protected var server: HttpServer? = null
+) : StreamServer<MyStreamServerConfiguration> {
+    private var server: HttpServer? = null
 
     @Synchronized
     @Throws(InitializationException::class)
     override fun init(bindAddress: InetAddress, router: Router) {
         try {
-            val socketAddress = InetSocketAddress(bindAddress, configuration.getListenPort())
+            val socketAddress = InetSocketAddress(bindAddress, configuration.listenPort)
             server = HttpServer.create(socketAddress, configuration.tcpConnectionBacklog)
             server!!.createContext("/", MyRequestHttpHandler(router))
             logger.info("* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *")
@@ -78,12 +78,14 @@ class MyStreamServerImpl(
      * Logs a warning and returns `true`, we can't access the socket using the awful JDK webserver API.
      * Override this method if you know how to do it.
      */
-    protected fun isConnectionOpen(exchange: HttpExchange?): Boolean {
+    private fun isConnectionOpen(exchange: HttpExchange?): Boolean {
         logger.warn("Can't check client connection, socket access impossible on JDK webserver!")
         return true
     }
 
-    protected inner class MyHttpServerConnection(protected var exchange: HttpExchange) : Connection {
+    private inner class MyHttpServerConnection(
+        private val exchange: HttpExchange
+    ) : Connection {
         override fun isOpen(): Boolean {
             return isConnectionOpen(exchange)
         }
@@ -96,5 +98,7 @@ class MyStreamServerImpl(
             return if (exchange.localAddress != null) exchange.localAddress.address else null
         }
     }
+
+    companion object: KLogging()
 }
 

@@ -1,6 +1,6 @@
 package net.schowek.nextclouddlna.dlna.transport
 
-import net.schowek.nextclouddlna.util.Logging
+import mu.KLogging
 import org.apache.http.*
 import org.apache.http.client.ResponseHandler
 import org.apache.http.client.config.RequestConfig
@@ -30,7 +30,7 @@ import java.util.concurrent.Callable
 
 class ApacheStreamClient(
     private val configuration: ApacheStreamClientConfiguration
-) : Logging, AbstractStreamClient<ApacheStreamClientConfiguration?, HttpRequestBase>() {
+) : AbstractStreamClient<ApacheStreamClientConfiguration?, HttpRequestBase>() {
     private val clientConnectionManager: PoolingHttpClientConnectionManager
     private val httpClient: CloseableHttpClient
 
@@ -230,7 +230,7 @@ class ApacheStreamClient(
         }
     }
 
-    companion object {
+    companion object : KLogging() {
         private fun addHeaders(httpMessage: HttpMessage, headers: Headers) {
             for ((key, value1) in headers) {
                 for (value in value1) {

@@ -1,8 +1,8 @@
 package net.schowek.nextclouddlna.dlna.media
 
 import jakarta.annotation.PostConstruct
+import mu.KLogging
 import net.schowek.nextclouddlna.util.ExternalUrls
-import net.schowek.nextclouddlna.util.Logging
 import org.jupnp.model.meta.*
 import org.jupnp.model.types.UDADeviceType
 import org.jupnp.model.types.UDN.uniqueSystemIdentifier
@@ -21,7 +21,7 @@ class MediaServer(
     @Value("\${server.friendlyName}")
     private val friendlyName: String,
     private val externalUrls: ExternalUrls
-) : Logging {
+) {
     val device = LocalDevice(
         DeviceIdentity(uniqueSystemIdentifier("DLNAtoad-MediaServer"), 300),
         UDADeviceType(DEVICE_TYPE, VERSION),
@@ -34,7 +34,7 @@ class MediaServer(
         logger.info("uniqueSystemIdentifier: {} ({})", device.identity.udn, friendlyName)
     }
 
-    companion object {
+    companion object : KLogging() {
         private const val DEVICE_TYPE = "MediaServer"
         private const val VERSION = 1
         const val ICON_FILENAME = "icon.png"

@@ -1,8 +1,8 @@
 package net.schowek.nextclouddlna.nextcloud.content
 
 import jakarta.annotation.PostConstruct
+import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.MediaDB
-import net.schowek.nextclouddlna.util.Logging
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicInteger
@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 @Component
 class ContentTreeProvider(
     private val mediaDB: MediaDB
-) : Logging {
+) {
     private var tree = buildContentTree()
     private var lastMTime = 0L
 
@@ -91,6 +91,8 @@ class ContentTreeProvider(
 
     fun getItem(id: String): ContentItem? = tree.getItem(id)
     fun getNode(id: String): ContentNode? = tree.getNode(id)
+
+    companion object : KLogging()
 }
 
 

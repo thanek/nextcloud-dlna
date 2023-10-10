@@ -1,12 +1,12 @@
 package net.schowek.nextclouddlna.nextcloud
 
 import jakarta.annotation.PostConstruct
+import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.content.ContentItem
 import net.schowek.nextclouddlna.nextcloud.content.ContentNode
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
 import net.schowek.nextclouddlna.nextcloud.db.*
 import net.schowek.nextclouddlna.nextcloud.db.Filecache.Companion.FOLDER_MIME_TYPE
-import net.schowek.nextclouddlna.util.Logging
 import org.springframework.dao.InvalidDataAccessResourceUsageException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -19,7 +19,7 @@ class MediaDB(
     private val mimetypeRepository: MimetypeRepository,
     private val filecacheRepository: FilecacheRepository,
     private val groupFolderRepository: GroupFolderRepository
-) : Logging {
+)  {
     private val thumbStorageId: Int = filecacheRepository.findFirstByPath(nextcloudConfig.appDataDir).storage
     private val mimetypes: Map<Int, String> = mimetypeRepository.findAll().associate { it.id to it.mimetype }
     private val folderMimeType: Int = mimetypes.entries.find { it.value == FOLDER_MIME_TYPE }!!.key
@@ -100,5 +100,7 @@ class MediaDB(
             nextcloudConfig.appDataDir + "/" + f.path
         }
     }
+
+    companion object: KLogging()
 }
 

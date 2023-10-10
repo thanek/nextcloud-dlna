@@ -41,7 +41,7 @@ class DlnaService(
         }
     }
 
-    private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration() {
+    private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration(8081) {
         override fun createStreamClient(): StreamClient<*> {
             return ApacheStreamClient(
                 ApacheStreamClientConfiguration(syncProtocolExecutorService)

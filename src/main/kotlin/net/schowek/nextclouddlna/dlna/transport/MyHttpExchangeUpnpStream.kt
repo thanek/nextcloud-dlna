@@ -1,7 +1,7 @@
 package net.schowek.nextclouddlna.dlna.transport
 
 import com.sun.net.httpserver.HttpExchange
-import net.schowek.nextclouddlna.util.Logging
+import mu.KLogging
 import org.jupnp.model.message.*
 import org.jupnp.protocol.ProtocolFactory
 import org.jupnp.transport.spi.UpnpStream
@@ -13,38 +13,34 @@ import java.net.HttpURLConnection
 
 
 abstract class MyHttpExchangeUpnpStream(
-    protocolFactory: ProtocolFactory?,
-    val httpExchange: HttpExchange
-) : Logging, UpnpStream(protocolFactory) {
+    protocolFactory: ProtocolFactory,
+    private val httpExchange: HttpExchange
+) : UpnpStream(protocolFactory) {
 
     override fun run() {
         try {
-            val xchng = httpExchange
-
             // Status
             val requestMessage = StreamRequestMessage(
-                UpnpRequest.Method.getByHttpName(xchng.requestMethod),
-                xchng.requestURI
+                UpnpRequest.Method.getByHttpName(httpExchange.requestMethod),
+                httpExchange.requestURI
             )
             if (requestMessage.operation.method == UpnpRequest.Method.UNKNOWN) {
-                logger.warn("Method not supported by UPnP stack: {}", xchng.requestMethod)
-                throw RuntimeException("Method not supported: {}" + xchng.requestMethod)
+                logger.warn("Method not supported by UPnP stack: {}", httpExchange.requestMethod)
+                throw RuntimeException("Method not supported: {}" + httpExchange.requestMethod)
             }
 
             // Protocol
-            requestMessage.operation.httpMinorVersion = if (xchng.protocol.uppercase() == "HTTP/1.1") 1 else 0
-
+            requestMessage.operation.httpMinorVersion = if (httpExchange.protocol.uppercase() == "HTTP/1.1") 1 else 0
             // Connection wrapper
             requestMessage.connection = createConnection()
-
             // Headers
-            requestMessage.headers = UpnpHeaders(xchng.requestHeaders)
+            requestMessage.headers = UpnpHeaders(httpExchange.requestHeaders)
 
             // Body
             val bodyBytes: ByteArray
             var inputStream: InputStream? = null
             try {
-                inputStream = xchng.requestBody
+                inputStream = httpExchange.requestBody
                 bodyBytes = IO.readBytes(inputStream)
             } finally {
                 inputStream?.close()
@@ -67,13 +63,13 @@ abstract class MyHttpExchangeUpnpStream(
             // Return the response
             if (responseMessage != null) {
                 // Headers
-                xchng.responseHeaders.putAll(responseMessage.headers)
+                httpExchange.responseHeaders.putAll(responseMessage.headers)
 
                 // Body
                 val responseBodyBytes = if (responseMessage.hasBody()) responseMessage.bodyBytes else null
                 val contentLength = responseBodyBytes?.size ?: -1
                 logger.info("Sending HTTP response message: $responseMessage with content length: $contentLength")
-                xchng.sendResponseHeaders(responseMessage.operation.statusCode, contentLength.toLong())
+                httpExchange.sendResponseHeaders(responseMessage.operation.statusCode, contentLength.toLong())
                 if (responseBodyBytes!!.isNotEmpty()) {
                     logger.debug(" Response body: " + responseMessage.body)
                 }
@@ -81,7 +77,7 @@ abstract class MyHttpExchangeUpnpStream(
                     logger.debug("Response message has body, writing bytes to stream...")
                     var outputStream: OutputStream? = null
                     try {
-                        outputStream = xchng.responseBody
+                        outputStream = httpExchange.responseBody
                         IO.writeBytes(outputStream, responseBodyBytes)
                         outputStream.flush()
                     } finally {
@@ -91,11 +87,10 @@ abstract class MyHttpExchangeUpnpStream(
             } else {
                 // If it's null, it's 404, everything else needs a proper httpResponse
                 logger.info("Sending HTTP response status: " + HttpURLConnection.HTTP_NOT_FOUND)
-                xchng.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1)
+                httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, -1)
             }
             responseSent(responseMessage)
         } catch (t: Throwable) {
-
             // You definitely want to catch all Exceptions here, otherwise the server will
             // simply close the socket and you get an "unexpected end of file" on the client.
             // The same is true if you just rethrow an IOException - it is a mystery why it
@@ -116,5 +111,7 @@ abstract class MyHttpExchangeUpnpStream(
     }
 
     protected abstract fun createConnection(): Connection?
+
+    companion object: KLogging()
 }
 
