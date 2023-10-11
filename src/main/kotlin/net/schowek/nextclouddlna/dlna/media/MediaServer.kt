@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.IOException
+import java.io.InputStream
 
 
 @Component
@@ -20,17 +21,17 @@ class MediaServer(
     private val connectionManagerService: LocalService<*>,
     @Value("\${server.friendlyName}")
     private val friendlyName: String,
-    private val externalUrls: ExternalUrls
+    externalUrls: ExternalUrls
 ) {
-    val device = LocalDevice(
-        DeviceIdentity(uniqueSystemIdentifier("DLNAtoad-MediaServer"), 300),
+    final val device = LocalDevice(
+        DeviceIdentity(uniqueSystemIdentifier("Nextcloud-DLNA-MediaServer"), 300),
         UDADeviceType(DEVICE_TYPE, VERSION),
         DeviceDetails(friendlyName, externalUrls.selfURI),
-        createDeviceIcon(), arrayOf(contentDirectoryService, connectionManagerService)
+        createDeviceIcon(),
+        arrayOf(contentDirectoryService, connectionManagerService)
     )
 
-    @PostConstruct
-    fun init() {
+    init {
         logger.info("uniqueSystemIdentifier: {} ({})", device.identity.udn, friendlyName)
     }
 
@@ -41,13 +42,17 @@ class MediaServer(
 
         @Throws(IOException::class)
         fun createDeviceIcon(): Icon {
-            val resource = MediaServer::class.java.getResourceAsStream("/$ICON_FILENAME")
-                ?: throw IllegalStateException("Icon not found.")
+            val resource = iconResource()
             return resource.use { res ->
                 Icon("image/png", 48, 48, 8, ICON_FILENAME, res).also {
                     it.validate()
                 }
             }
+        }
+
+        fun iconResource(): InputStream {
+            return MediaServer::class.java.getResourceAsStream("/$ICON_FILENAME")
+                ?: throw IllegalStateException("Icon not found.")
         }
     }
 }

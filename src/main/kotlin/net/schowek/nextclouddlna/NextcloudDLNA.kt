@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component
 
 @Component
 class NextcloudDLNA(
-    private val dlnaService: DlnaService
+    dlnaService: DlnaService
 ) {
-    private val upnpService: UpnpService = dlnaService.start()
+    val upnpService: UpnpService = dlnaService.start()
 
     @PreDestroy
     fun destroy() {

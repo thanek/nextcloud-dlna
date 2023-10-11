@@ -1,5 +1,6 @@
 package net.schowek.nextclouddlna.dlna
 
+import mu.KLogging
 import net.schowek.nextclouddlna.dlna.media.MediaServer
 import net.schowek.nextclouddlna.dlna.transport.ApacheStreamClient
 import net.schowek.nextclouddlna.dlna.transport.ApacheStreamClientConfiguration
@@ -7,9 +8,13 @@ import net.schowek.nextclouddlna.dlna.transport.MyStreamServerConfiguration
 import net.schowek.nextclouddlna.dlna.transport.MyStreamServerImpl
 import net.schowek.nextclouddlna.util.ServerInfoProvider
 import org.jupnp.DefaultUpnpServiceConfiguration
+import org.jupnp.UpnpService
 import org.jupnp.UpnpServiceConfiguration
 import org.jupnp.UpnpServiceImpl
+import org.jupnp.model.meta.LocalDevice
 import org.jupnp.protocol.ProtocolFactory
+import org.jupnp.protocol.ProtocolFactoryImpl
+import org.jupnp.protocol.async.SendingNotificationAlive
 import org.jupnp.registry.Registry
 import org.jupnp.transport.impl.NetworkAddressFactoryImpl
 import org.jupnp.transport.spi.NetworkAddressFactory
@@ -39,9 +44,13 @@ class DlnaService(
         override fun createRegistry(pf: ProtocolFactory): Registry {
             return RegistryImplWithOverrides(this)
         }
+
+        override fun createProtocolFactory(): ProtocolFactory? {
+            return MyProtocolFactory(this)
+        }
     }
 
-    private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration(8081) {
+    private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration(8080) {
         override fun createStreamClient(): StreamClient<*> {
             return ApacheStreamClient(
                 ApacheStreamClientConfiguration(syncProtocolExecutorService)
@@ -72,3 +81,14 @@ class DlnaService(
     }
 }
 
+
+class MyProtocolFactory(
+    upnpService: UpnpService
+) : ProtocolFactoryImpl(upnpService) {
+    override fun createSendingNotificationAlive(localDevice: LocalDevice): SendingNotificationAlive {
+        logger.info { "SENDING ALIVE $localDevice" }
+        return SendingNotificationAlive(upnpService, localDevice)
+    }
+
+    companion object : KLogging()
+}
