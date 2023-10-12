@@ -1,6 +1,8 @@
-package net.schowek.nextclouddlna.dlna
+package net.schowek.nextclouddlna
 
+import jakarta.annotation.PreDestroy
 import mu.KLogging
+import net.schowek.nextclouddlna.dlna.RegistryImplWithOverrides
 import net.schowek.nextclouddlna.dlna.media.MediaServer
 import net.schowek.nextclouddlna.dlna.transport.ApacheStreamClient
 import net.schowek.nextclouddlna.dlna.transport.ApacheStreamClientConfiguration
@@ -20,6 +22,8 @@ import org.jupnp.transport.impl.NetworkAddressFactoryImpl
 import org.jupnp.transport.spi.NetworkAddressFactory
 import org.jupnp.transport.spi.StreamClient
 import org.jupnp.transport.spi.StreamServer
+import org.springframework.context.event.ContextRefreshedEvent
+import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -27,15 +31,25 @@ import java.net.NetworkInterface
 
 @Component
 class DlnaService(
-    private val serverInfoProvider: ServerInfoProvider,
-    private val mediaServer: MediaServer
+    private val mediaServer: MediaServer,
+    serverInfoProvider: ServerInfoProvider,
 ) {
-    // Named this way cos NetworkAddressFactoryImpl has a bindAddresses field.
     private val addressesToBind: List<InetAddress> = listOf(serverInfoProvider.address!!)
+    var upnpService: UpnpService = MyUpnpService(MyUpnpServiceConfiguration())
 
-    fun start() = MyUpnpService(MyUpnpServiceConfiguration()).also {
-        it.startup()
-        it.registry.addDevice(mediaServer.device)
+    fun start() {
+        upnpService.startup()
+        upnpService.registry.addDevice(mediaServer.device)
+    }
+
+    @EventListener
+    fun handleContextRefresh(event: ContextRefreshedEvent) {
+        start()
+    }
+
+    @PreDestroy
+    fun destroy() {
+        upnpService.shutdown()
     }
 
     inner class MyUpnpService(
@@ -79,6 +93,8 @@ class DlnaService(
             return addressesToBind.contains(address)
         }
     }
+
+    companion object : KLogging()
 }
 
 

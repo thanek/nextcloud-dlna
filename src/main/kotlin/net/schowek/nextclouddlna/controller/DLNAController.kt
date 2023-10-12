@@ -3,16 +3,17 @@ package net.schowek.nextclouddlna.controller
 import UpnpStreamProcessor
 import jakarta.servlet.http.HttpServletRequest
 import mu.KLogging
-import net.schowek.nextclouddlna.NextcloudDLNA
+import net.schowek.nextclouddlna.DlnaService
 import net.schowek.nextclouddlna.dlna.media.MediaServer
 import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.util.MultiValueMap
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod.*
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.ResponseBody
 
 @Controller
 class DLNAController(
-    private val dlna: NextcloudDLNA,
+    private val dlna: DlnaService,
     private val streamRequestMapper: StreamRequestMapper
 ) {
     @RequestMapping(
@@ -75,6 +76,13 @@ class DLNAController(
             HttpHeaders().also { h -> r.headers.entries.forEach { h.add(it.key, it.value.joinToString { it }) } },
             HttpStatusCode.valueOf(r.operation.statusCode)
         )
+    }
+
+    @GetMapping("/alive")
+    fun sendAlive(): ResponseEntity<String> {
+        logger.info { "STARTING!" }
+        dlna.start();
+        return ResponseEntity(HttpStatus.OK)
     }
 
     companion object : KLogging()

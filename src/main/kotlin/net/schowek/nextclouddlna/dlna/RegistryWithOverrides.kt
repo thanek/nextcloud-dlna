@@ -1,11 +1,13 @@
 package net.schowek.nextclouddlna.dlna
 
+import mu.KLogging
 import net.schowek.nextclouddlna.dlna.media.MediaServer
 import net.schowek.nextclouddlna.dlna.media.MediaServer.Companion.ICON_FILENAME
 import org.jupnp.UpnpService
 import org.jupnp.model.resource.IconResource
 import org.jupnp.model.resource.Resource
 import org.jupnp.registry.RegistryImpl
+import org.jupnp.registry.RegistryMaintainer
 import java.io.IOException
 import java.net.URI
 
@@ -31,4 +33,12 @@ class RegistryImplWithOverrides(
             icon
         } else super.getResource(pathQuery)
     }
+
+    fun maintain() {
+        logger.info { "REGISTRY MAINTAIN" }
+        Thread(registryMaintainer).start()
+        logger.info { "REGISTRY MAINTAIN  DONE" }
+    }
+
+    companion object : KLogging()
 }
