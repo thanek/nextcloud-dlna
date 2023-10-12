@@ -32,7 +32,7 @@ import java.net.NetworkInterface
 @Component
 class DlnaService(
     private val mediaServer: MediaServer,
-    serverInfoProvider: ServerInfoProvider,
+    private val serverInfoProvider: ServerInfoProvider,
 ) {
     private val addressesToBind: List<InetAddress> = listOf(serverInfoProvider.address!!)
     var upnpService: UpnpService = MyUpnpService(MyUpnpServiceConfiguration())
@@ -55,16 +55,16 @@ class DlnaService(
     inner class MyUpnpService(
         configuration: UpnpServiceConfiguration
     ) : UpnpServiceImpl(configuration) {
+        init {
+            protocolFactory = createProtocolFactory()
+        }
+
         override fun createRegistry(pf: ProtocolFactory): Registry {
             return RegistryImplWithOverrides(this)
         }
-
-        override fun createProtocolFactory(): ProtocolFactory? {
-            return MyProtocolFactory(this)
-        }
     }
 
-    private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration(8080) {
+    private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration(serverInfoProvider.port) {
         override fun createStreamClient(): StreamClient<*> {
             return ApacheStreamClient(
                 ApacheStreamClientConfiguration(syncProtocolExecutorService)
@@ -92,18 +92,6 @@ class DlnaService(
         override fun isUsableAddress(iface: NetworkInterface, address: InetAddress): Boolean {
             return addressesToBind.contains(address)
         }
-    }
-
-    companion object : KLogging()
-}
-
-
-class MyProtocolFactory(
-    upnpService: UpnpService
-) : ProtocolFactoryImpl(upnpService) {
-    override fun createSendingNotificationAlive(localDevice: LocalDevice): SendingNotificationAlive {
-        logger.info { "SENDING ALIVE $localDevice" }
-        return SendingNotificationAlive(upnpService, localDevice)
     }
 
     companion object : KLogging()

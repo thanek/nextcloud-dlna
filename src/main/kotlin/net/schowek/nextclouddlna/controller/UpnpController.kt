@@ -1,19 +1,17 @@
 package net.schowek.nextclouddlna.controller
 
-import UpnpStreamProcessor
 import jakarta.servlet.http.HttpServletRequest
 import mu.KLogging
-import net.schowek.nextclouddlna.DlnaService
 import net.schowek.nextclouddlna.dlna.media.MediaServer
+import net.schowek.nextclouddlna.upnp.StreamRequestMapper
+import net.schowek.nextclouddlna.upnp.UpnpStreamProcessor
 import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod.*
@@ -21,9 +19,9 @@ import org.springframework.web.bind.annotation.ResponseBody
 
 
 @Controller
-class DLNAController(
-    private val dlna: DlnaService,
-    private val streamRequestMapper: StreamRequestMapper
+class UpnpController(
+    private val streamRequestMapper: StreamRequestMapper,
+    private val upnpStreamProcessor: UpnpStreamProcessor
 ) {
     @RequestMapping(
         method = [GET, HEAD], value = ["/dev/{uid}/icon.png"],
@@ -51,7 +49,7 @@ class DLNAController(
         request: HttpServletRequest
     ): ResponseEntity<Any> {
         logger.info { "GET request from ${request.remoteAddr}: ${request.requestURI}" }
-        val r = UpnpStreamProcessor(dlna).processMessage(streamRequestMapper.map(request))
+        val r = upnpStreamProcessor.processMessage(streamRequestMapper.map(request))
         return ResponseEntity(
             r.body,
             HttpHeaders().also { h -> r.headers.entries.forEach { h.add(it.key, it.value.joinToString { it }) } },
@@ -70,19 +68,12 @@ class DLNAController(
         request: HttpServletRequest
     ): ResponseEntity<Any> {
         logger.info { "POST request from ${request.remoteAddr}: ${request.requestURI}" }
-        val r = UpnpStreamProcessor(dlna).processMessage(streamRequestMapper.map(request))
+        val r = upnpStreamProcessor.processMessage(streamRequestMapper.map(request))
         return ResponseEntity(
             r.body,
             HttpHeaders().also { h -> r.headers.entries.forEach { h.add(it.key, it.value.joinToString { it }) } },
             HttpStatusCode.valueOf(r.operation.statusCode)
         )
-    }
-
-    @GetMapping("/alive")
-    fun sendAlive(): ResponseEntity<String> {
-        logger.info { "STARTING!" }
-        dlna.start();
-        return ResponseEntity(HttpStatus.OK)
     }
 
     companion object : KLogging()

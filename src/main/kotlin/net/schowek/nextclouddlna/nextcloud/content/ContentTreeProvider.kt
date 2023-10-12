@@ -16,11 +16,6 @@ class ContentTreeProvider(
     private var tree = buildContentTree()
     private var lastMTime = 0L
 
-    init {
-        rebuildTree()
-    }
-
-    @PostConstruct
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 60)
     final fun rebuildTree() {
         val maxMtime: Long = mediaDB.maxMtime()
