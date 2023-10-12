@@ -1,25 +1,26 @@
 package net.schowek.nextclouddlna.nextcloud.content
 
-import jakarta.annotation.PostConstruct
 import mu.KLogging
-import net.schowek.nextclouddlna.nextcloud.MediaDB
+import net.schowek.nextclouddlna.nextcloud.NextcloudDB
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 
 @Component
 class ContentTreeProvider(
-    private val mediaDB: MediaDB
+    private val nextcloudDB: NextcloudDB
 ) {
     private var tree = buildContentTree()
     private var lastMTime = 0L
 
-    @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 60)
+    @Scheduled(fixedDelay = REBUILD_TREE_DELAY_IN_MS, initialDelay = REBUILD_TREE_INIT_DELAY_IN_MS)
     final fun rebuildTree() {
-        val maxMtime: Long = mediaDB.maxMtime()
-        if (lastMTime < maxMtime) {
+        val maxMtime: Long = nextcloudDB.maxMtime()
+        val now = Instant.now().epochSecond
+        if (lastMTime < maxMtime || lastMTime + MAX_REBUILD_OFFSET_IN_S > now) {
             logger.info("ContentTree seems to be outdated - Loading...")
             this.tree = buildContentTree()
             lastMTime = maxMtime
@@ -30,12 +31,12 @@ class ContentTreeProvider(
         val tree = ContentTree()
         val root = ContentNode(0, -1, "ROOT")
         tree.addNode(root)
-        mediaDB.mainNodes().forEach { n ->
+        nextcloudDB.mainNodes().forEach { n ->
             root.addNode(n)
             fillNode(n, tree)
         }
         logger.info("Getting content from group folders...")
-        mediaDB.groupFolders().forEach { n ->
+        nextcloudDB.groupFolders().forEach { n ->
             logger.info(" Group folder found: {}", n.name)
             root.addNode(n)
             fillNode(n, tree)
@@ -48,7 +49,7 @@ class ContentTreeProvider(
     private fun loadThumbnails(tree: ContentTree) {
         logger.info("Loading thumbnails...")
         val thumbsCount = AtomicInteger()
-        mediaDB.processThumbnails { thumb ->
+        nextcloudDB.processThumbnails { thumb ->
             val id = getItemIdForThumbnail(thumb)
             if (id != null) {
                 val item = tree.getItem(id)
@@ -72,7 +73,7 @@ class ContentTreeProvider(
     }
 
     private fun fillNode(node: ContentNode, tree: ContentTree) {
-        mediaDB.appendChildren(node)
+        nextcloudDB.appendChildren(node)
         tree.addNode(node)
         node.getItems().forEach { item ->
             logger.debug("Adding item[{}]: " + item.path, item.id)
@@ -87,7 +88,11 @@ class ContentTreeProvider(
     fun getItem(id: String): ContentItem? = tree.getItem(id)
     fun getNode(id: String): ContentNode? = tree.getNode(id)
 
-    companion object : KLogging()
+    companion object : KLogging() {
+        const val REBUILD_TREE_DELAY_IN_MS = 1000 * 60L // 1m
+        const val REBUILD_TREE_INIT_DELAY_IN_MS = 1000 * 60L // 1m
+        const val MAX_REBUILD_OFFSET_IN_S = 60 * 60 * 12L // 12h
+    }
 }
 
 

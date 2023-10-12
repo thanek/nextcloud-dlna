@@ -12,8 +12,9 @@ class StreamRequestMapper {
     fun map(request: HttpServletRequest): StreamRequestMessage {
         val requestMessage = StreamRequestMessage(
             UpnpRequest.Method.getByHttpName(request.method),
-            URI(request.requestURI)
-            // TODO  put request.inputStream.readBytes() here
+            URI(request.requestURI),
+            // TODO check if request is binary and create body as unwrapped byteArray
+            String(request.inputStream.readBytes())
         )
         if (requestMessage.operation.method == UpnpRequest.Method.UNKNOWN) {
             logger.warn("Method not supported by UPnP stack: {}", request.method)
@@ -22,26 +23,7 @@ class StreamRequestMapper {
 
         requestMessage.connection = MyHttpServerConnection(request)
         requestMessage.headers = createHeaders(request)
-        setBody(request, requestMessage)
         return requestMessage
-    }
-
-    private fun setBody(
-        request: HttpServletRequest,
-        requestMessage: StreamRequestMessage
-    ) {
-        val bodyBytes = request.inputStream.readBytes()
-
-        logger.debug(" Reading request body bytes: " + bodyBytes.size)
-        if (bodyBytes.isNotEmpty() && requestMessage.isContentTypeMissingOrText) {
-            logger.debug("Request contains textual entity body, converting then setting string on message")
-            requestMessage.setBodyCharacters(bodyBytes)
-        } else if (bodyBytes.isNotEmpty()) {
-            logger.debug("Request contains binary entity body, setting bytes on message")
-            requestMessage.setBody(UpnpMessage.BodyType.BYTES, bodyBytes)
-        } else {
-            logger.debug("Request did not contain entity body")
-        }
     }
 
     private fun createHeaders(request: HttpServletRequest): UpnpHeaders {

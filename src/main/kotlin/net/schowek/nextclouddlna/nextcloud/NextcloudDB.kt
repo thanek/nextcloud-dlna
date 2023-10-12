@@ -14,7 +14,7 @@ import java.util.function.Consumer
 
 
 @Component
-class MediaDB(
+class NextcloudDB(
     private val nextcloudConfig: NextcloudConfigDiscovery,
     private val mimetypeRepository: MimetypeRepository,
     private val filecacheRepository: FilecacheRepository,

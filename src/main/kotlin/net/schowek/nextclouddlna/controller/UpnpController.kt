@@ -32,48 +32,31 @@ class UpnpController(
         @PathVariable("uid") uid: String,
         request: HttpServletRequest
     ): Resource {
-        logger.info { "GET ICON request from ${request.remoteAddr}: ${request.requestURI}" }
+        logger.info { "GET icon request from ${request.remoteAddr}: ${request.requestURI}" }
         return InputStreamResource(MediaServer.iconResource());
     }
 
     @RequestMapping(
-        method = [GET, HEAD], value = [
+        method = [GET, HEAD, POST], value = [
             "/dev/{uid}/desc",
             "/dev/{uid}/svc/upnp-org/ContentDirectory/desc",
-            "/dev/{uid}/svc/upnp-org/ConnectionManager/desc"
-        ],
-        produces = ["application/xml;charset=utf8", "text/xml;charset=utf8"]
-    )
-    fun handleGet(
-        @PathVariable("uid") uid: String,
-        request: HttpServletRequest
-    ): ResponseEntity<Any> {
-        logger.info { "GET request from ${request.remoteAddr}: ${request.requestURI}" }
-        val r = upnpStreamProcessor.processMessage(streamRequestMapper.map(request))
-        return ResponseEntity(
-            r.body,
-            HttpHeaders().also { h -> r.headers.entries.forEach { h.add(it.key, it.value.joinToString { it }) } },
-            HttpStatusCode.valueOf(r.operation.statusCode)
-        )
-    }
-
-    @RequestMapping(
-        method = [POST], value = [
+            "/dev/{uid}/svc/upnp-org/ConnectionManager/desc",
             "/dev/{uid}/svc/upnp-org/ContentDirectory/action"
         ],
         produces = ["application/xml;charset=utf8", "text/xml;charset=utf8"]
     )
-    fun handlePost(
+    fun handleUpnp(
         @PathVariable("uid") uid: String,
         request: HttpServletRequest
     ): ResponseEntity<Any> {
-        logger.info { "POST request from ${request.remoteAddr}: ${request.requestURI}" }
-        val r = upnpStreamProcessor.processMessage(streamRequestMapper.map(request))
-        return ResponseEntity(
-            r.body,
-            HttpHeaders().also { h -> r.headers.entries.forEach { h.add(it.key, it.value.joinToString { it }) } },
-            HttpStatusCode.valueOf(r.operation.statusCode)
-        )
+        logger.info { "Upnp ${request.method} request from ${request.remoteAddr}: ${request.requestURI}" }
+        return with(upnpStreamProcessor.processMessage(streamRequestMapper.map(request))) {
+            ResponseEntity(
+                body,
+                HttpHeaders().also { h -> headers.entries.forEach { e -> h.add(e.key, e.value.joinToString { it }) } },
+                HttpStatusCode.valueOf(operation.statusCode)
+            )
+        }
     }
 
     companion object : KLogging()
