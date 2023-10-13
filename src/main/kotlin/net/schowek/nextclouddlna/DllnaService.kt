@@ -13,6 +13,8 @@ import org.jupnp.DefaultUpnpServiceConfiguration
 import org.jupnp.UpnpService
 import org.jupnp.UpnpServiceConfiguration
 import org.jupnp.UpnpServiceImpl
+import org.jupnp.model.message.StreamRequestMessage
+import org.jupnp.model.message.StreamResponseMessage
 import org.jupnp.model.meta.LocalDevice
 import org.jupnp.protocol.ProtocolFactory
 import org.jupnp.protocol.ProtocolFactoryImpl
@@ -35,7 +37,7 @@ class DlnaService(
     private val serverInfoProvider: ServerInfoProvider,
 ) {
     private val addressesToBind: List<InetAddress> = listOf(serverInfoProvider.address!!)
-    var upnpService: UpnpService = MyUpnpService(MyUpnpServiceConfiguration())
+    var upnpService = MyUpnpService(MyUpnpServiceConfiguration())
 
     fun start() {
         upnpService.startup()
@@ -52,13 +54,19 @@ class DlnaService(
         upnpService.shutdown()
     }
 
+    fun processRequest(requestMsg: StreamRequestMessage): StreamResponseMessage {
+        logger.debug { "Processing $requestMsg" }
+        return with(upnpService.protocolFactory.createReceivingSync(requestMsg)) {
+            run()
+            outputMessage
+        }.also {
+            logger.debug { "Response: ${it.operation.statusCode} ${it.body}" }
+        }
+    }
+
     inner class MyUpnpService(
         configuration: UpnpServiceConfiguration
     ) : UpnpServiceImpl(configuration) {
-        init {
-            protocolFactory = createProtocolFactory()
-        }
-
         override fun createRegistry(pf: ProtocolFactory): Registry {
             return RegistryImplWithOverrides(this)
         }

@@ -2,9 +2,9 @@ package net.schowek.nextclouddlna.controller
 
 import jakarta.servlet.http.HttpServletRequest
 import mu.KLogging
+import net.schowek.nextclouddlna.DlnaService
 import net.schowek.nextclouddlna.dlna.media.MediaServer
-import net.schowek.nextclouddlna.upnp.StreamRequestMapper
-import net.schowek.nextclouddlna.upnp.UpnpStreamProcessor
+import net.schowek.nextclouddlna.dlna.StreamRequestMapper
 import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody
 @Controller
 class UpnpController(
     private val streamRequestMapper: StreamRequestMapper,
-    private val upnpStreamProcessor: UpnpStreamProcessor
+    private val dlnaService: DlnaService
 ) {
     @RequestMapping(
         method = [GET, HEAD], value = ["/dev/{uid}/icon.png"],
@@ -50,7 +50,7 @@ class UpnpController(
         request: HttpServletRequest
     ): ResponseEntity<Any> {
         logger.info { "Upnp ${request.method} request from ${request.remoteAddr}: ${request.requestURI}" }
-        return with(upnpStreamProcessor.processMessage(streamRequestMapper.map(request))) {
+        return with(dlnaService.processRequest(streamRequestMapper.map(request))) {
             ResponseEntity(
                 body,
                 HttpHeaders().also { h -> headers.entries.forEach { e -> h.add(e.key, e.value.joinToString { it }) } },

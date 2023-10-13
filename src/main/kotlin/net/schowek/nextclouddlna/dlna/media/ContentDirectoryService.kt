@@ -16,6 +16,8 @@ import org.jupnp.support.model.item.Item
 import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.TimeUnit.NANOSECONDS
+import kotlin.math.max
+import kotlin.math.min
 
 
 @Component
@@ -89,12 +91,12 @@ class ContentDirectoryService(
             val didl = DIDLContent()
             if (containers.size > firstResult) {
                 val from = firstResult.toInt()
-                val to = Math.min((firstResult + maxResults).toInt(), containers.size)
+                val to = min((firstResult + maxResults).toInt(), containers.size)
                 didl.containers = containers.subList(from, to)
             }
             if (didl.containers.size < maxResults) {
-                val from = Math.max(firstResult - containers.size, 0).toInt()
-                val to = Math.min(items.size, from + (maxResults - didl.containers.size).toInt())
+                val from = max(firstResult - containers.size, 0).toInt()
+                val to = min(items.size, from + (maxResults - didl.containers.size).toInt())
                 didl.items = items.subList(from, to)
             }
             return BrowseResult(

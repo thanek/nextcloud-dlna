@@ -1,4 +1,4 @@
-package net.schowek.nextclouddlna.upnp
+package net.schowek.nextclouddlna.dlna
 
 import jakarta.servlet.http.HttpServletRequest
 import mu.KLogging
