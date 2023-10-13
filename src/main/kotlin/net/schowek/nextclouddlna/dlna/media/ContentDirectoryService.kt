@@ -43,27 +43,29 @@ class ContentDirectoryService(
     ): BrowseResult {
         val startTime = System.nanoTime()
         return try {
-            // TODO optimize:
-            // * checking if it's node or item before fetching them in two queries
-            // * not fetching children for METADATA browse flag
-            val node = contentTreeProvider.getNode(objectID)
-            if (node != null) {
+            contentTreeProvider.getNode(objectID)?.let { node ->
                 if (browseFlag == METADATA) {
-                    val didl = DIDLContent()
-                    didl.addContainer(nodeConverter.makeContainerWithoutSubContainers(node))
-                    return BrowseResult(DIDLParser().generate(didl), 1, 1)
+                    val result = DIDLParser().generate(
+                        DIDLContent().also {
+                            it.addContainer(nodeConverter.makeContainerWithoutSubContainers(node))
+                        }
+                    )
+                    return BrowseResult(result, 1, 1)
                 }
                 val containers: List<Container> = nodeConverter.makeSubContainersWithoutTheirSubContainers(node)
                 val items: List<Item> = nodeConverter.makeItems(node)
                 return toRangedResult(containers, items, firstResult, maxResults)
             }
-            val item = contentTreeProvider.getItem(objectID)
-            if (item != null) {
-                val didl = DIDLContent()
-                didl.addItem(nodeConverter.makeItem(item))
-                val result = DIDLParser().generate(didl)
+
+            contentTreeProvider.getItem(objectID)?.let { item ->
+                val result = DIDLParser().generate(
+                    DIDLContent().also {
+                        it.addItem(nodeConverter.makeItem(item))
+                    }
+                )
                 return BrowseResult(result, 1, 1)
             }
+
             BrowseResult(DIDLParser().generate(DIDLContent()), 0, 0)
         } catch (e: Exception) {
             logger.warn(
@@ -78,33 +80,32 @@ class ContentDirectoryService(
             )
         }
     }
-
-    companion object : KLogging() {
-        @Throws(Exception::class)
-        private fun toRangedResult(
-            containers: List<Container>,
-            items: List<Item>,
-            firstResult: Long,
-            maxResultsParam: Long
-        ): BrowseResult {
-            val maxResults = if (maxResultsParam == 0L) (containers.size + items.size).toLong() else maxResultsParam
-            val didl = DIDLContent()
-            if (containers.size > firstResult) {
-                val from = firstResult.toInt()
-                val to = min((firstResult + maxResults).toInt(), containers.size)
-                didl.containers = containers.subList(from, to)
-            }
-            if (didl.containers.size < maxResults) {
-                val from = max(firstResult - containers.size, 0).toInt()
-                val to = min(items.size, from + (maxResults - didl.containers.size).toInt())
-                didl.items = items.subList(from, to)
-            }
-            return BrowseResult(
-                DIDLParser().generate(didl),
-                (didl.containers.size + didl.items.size).toLong(),
-                (containers.size + items.size).toLong()
-            )
+    @Throws(Exception::class)
+    private fun toRangedResult(
+        containers: List<Container>,
+        items: List<Item>,
+        firstResult: Long,
+        maxResultsParam: Long
+    ): BrowseResult {
+        val maxResults = if (maxResultsParam == 0L) (containers.size + items.size).toLong() else maxResultsParam
+        val didl = DIDLContent()
+        if (containers.size > firstResult) {
+            val from = firstResult.toInt()
+            val to = min((firstResult + maxResults).toInt(), containers.size)
+            didl.containers = containers.subList(from, to)
         }
+        if (didl.containers.size < maxResults) {
+            val from = max(firstResult - containers.size, 0).toInt()
+            val to = min(items.size, from + (maxResults - didl.containers.size).toInt())
+            didl.items = items.subList(from, to)
+        }
+        return BrowseResult(
+            DIDLParser().generate(didl),
+            (didl.containers.size + didl.items.size).toLong(),
+            (containers.size + items.size).toLong()
+        )
     }
+
+    companion object : KLogging()
 }
 

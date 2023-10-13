@@ -4,18 +4,12 @@ import org.jupnp.transport.spi.AbstractStreamClientConfiguration
 import java.util.concurrent.ExecutorService
 
 
-class ApacheStreamClientConfiguration : AbstractStreamClientConfiguration {
-    var maxTotalConnections = 1024
-
-    var maxTotalPerRoute = 100
-
-    var contentCharset = "UTF-8" // UDA spec says it's always UTF-8 entity content
-
-    constructor(timeoutExecutorService: ExecutorService?) : super(timeoutExecutorService)
-    constructor(timeoutExecutorService: ExecutorService?, timeoutSeconds: Int) : super(
-        timeoutExecutorService,
-        timeoutSeconds
-    )
+class ApacheStreamClientConfiguration(
+    timeoutExecutorService: ExecutorService
+) : AbstractStreamClientConfiguration(timeoutExecutorService) {
+    val maxTotalConnections = 1024
+    val maxTotalPerRoute = 100
+    val contentCharset = "UTF-8" // UDA spec says it's always UTF-8 entity content
 
     val socketBufferSize: Int get() = -1
 

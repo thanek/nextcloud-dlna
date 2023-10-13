@@ -50,14 +50,14 @@ class ContentTreeProvider(
         logger.info("Loading thumbnails...")
         val thumbsCount = AtomicInteger()
         nextcloudDB.processThumbnails { thumb ->
-            val id = getItemIdForThumbnail(thumb)
-            if (id != null) {
-                val item = tree.getItem(id)
-                if (item != null && item.thumb == null) {
-                    logger.debug("Adding thumbnail for item {}: {}", id, thumb)
-                    item.thumb = thumb
-                    tree.addItem(thumb)
-                    thumbsCount.getAndIncrement()
+            getItemIdForThumbnail(thumb)?.let { id ->
+                tree.getItem(id)?.let { item ->
+                    item.thumb ?: let {
+                        logger.debug("Adding thumbnail for item {}: {}", id, thumb)
+                        item.thumb = thumb
+                        tree.addItem(thumb)
+                        thumbsCount.getAndIncrement()
+                    }
                 }
             }
         }
@@ -75,11 +75,11 @@ class ContentTreeProvider(
     private fun fillNode(node: ContentNode, tree: ContentTree) {
         nextcloudDB.appendChildren(node)
         tree.addNode(node)
-        node.getItems().forEach { item ->
+        node.items.forEach { item ->
             logger.debug("Adding item[{}]: " + item.path, item.id)
             tree.addItem(item)
         }
-        node.getNodes().forEach { n ->
+        node.nodes.forEach { n ->
             logger.debug("Adding node: " + n.name)
             fillNode(n, tree)
         }

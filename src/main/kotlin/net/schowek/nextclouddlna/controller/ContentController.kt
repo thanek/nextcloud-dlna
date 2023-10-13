@@ -25,7 +25,7 @@ import java.util.*
 @RestController
 class ContentController(
     private val contentTreeProvider: ContentTreeProvider
-)  {
+) {
     @RequestMapping(method = [RequestMethod.GET, RequestMethod.HEAD], value = ["/c/{id}"])
     @ResponseBody
     fun getResource(
@@ -33,20 +33,20 @@ class ContentController(
         request: HttpServletRequest,
         response: HttpServletResponse
     ): ResponseEntity<FileSystemResource> {
-        val item = contentTreeProvider.getItem(id)
-        if (item == null) {
+        return contentTreeProvider.getItem(id)?.let { item ->
+            if (!request.getHeaders("range").hasMoreElements()) {
+                logger.info("Serving content {} {}", request.method, id)
+            }
+            val fileSystemResource = FileSystemResource(item.path)
+            response.addHeader("Content-Type", item.format.mime)
+            response.addHeader("contentFeatures.dlna.org", makeProtocolInfo(item.format).toString())
+            response.addHeader("transferMode.dlna.org", "Streaming")
+            response.addHeader("realTimeInfo.dlna.org", "DLNA.ORG_TLAG=*")
+            ResponseEntity(fileSystemResource, HttpStatus.OK)
+        } ?: let {
             logger.info("Could not find item id: {}", id)
-            return ResponseEntity(HttpStatus.NOT_FOUND)
+            ResponseEntity(HttpStatus.NOT_FOUND)
         }
-        if (!request.getHeaders("range").hasMoreElements()) {
-            logger.info("Serving content {} {}", request.method, id)
-        }
-        val fileSystemResource = FileSystemResource(item.path)
-        response.addHeader("Content-Type", item.format.mime)
-        response.addHeader("contentFeatures.dlna.org", makeProtocolInfo(item.format).toString())
-        response.addHeader("transferMode.dlna.org", "Streaming")
-        response.addHeader("realTimeInfo.dlna.org", "DLNA.ORG_TLAG=*")
-        return ResponseEntity(fileSystemResource, HttpStatus.OK)
     }
 
     @RequestMapping(method = [RequestMethod.GET], value = ["/rebuild"])
@@ -57,9 +57,7 @@ class ContentController(
     }
 
     private fun makeProtocolInfo(mediaFormat: MediaFormat): DLNAProtocolInfo {
-        val attributes = EnumMap<Type, DLNAAttribute<*>>(
-            Type::class.java
-        )
+        val attributes = EnumMap<Type, DLNAAttribute<*>>(Type::class.java)
         if (mediaFormat.contentGroup === VIDEO) {
             attributes[DLNA_ORG_PN] = DLNAProfileAttribute(AVC_MP4_LPCM)
             attributes[DLNA_ORG_OP] = DLNAOperationsAttribute(RANGE)
@@ -73,6 +71,7 @@ class ContentController(
         }
         return DLNAProtocolInfo(Protocol.HTTP_GET, ProtocolInfo.WILDCARD, mediaFormat.mime, attributes)
     }
-    companion object: KLogging()
+
+    companion object : KLogging()
 }
 

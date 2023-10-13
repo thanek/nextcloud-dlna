@@ -1,6 +1,5 @@
 package net.schowek.nextclouddlna.dlna.media
 
-import jakarta.annotation.PostConstruct
 import mu.KLogging
 import net.schowek.nextclouddlna.util.ExternalUrls
 import org.jupnp.model.meta.*
@@ -10,7 +9,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.IOException
-import java.io.InputStream
 
 
 @Component
@@ -24,7 +22,7 @@ class MediaServer(
     externalUrls: ExternalUrls
 ) {
     final val device = LocalDevice(
-        DeviceIdentity(uniqueSystemIdentifier("Nextcloud-DLNA-MediaServer"), 300),
+        DeviceIdentity(uniqueSystemIdentifier("Nextcloud-DLNA-MediaServer"), ADVERTISEMENT_AGE_IN_S),
         UDADeviceType(DEVICE_TYPE, VERSION),
         DeviceDetails(friendlyName, externalUrls.selfURI),
         createDeviceIcon(),
@@ -36,24 +34,22 @@ class MediaServer(
     }
 
     companion object : KLogging() {
+        const val ICON_FILENAME = "icon.png"
         private const val DEVICE_TYPE = "MediaServer"
         private const val VERSION = 1
-        const val ICON_FILENAME = "icon.png"
+        private const val ADVERTISEMENT_AGE_IN_S = 60
 
         @Throws(IOException::class)
-        fun createDeviceIcon(): Icon {
-            val resource = iconResource()
-            return resource.use { res ->
+        fun createDeviceIcon() = with(iconResource()) {
+            this.use { res ->
                 Icon("image/png", 48, 48, 8, ICON_FILENAME, res).also {
                     it.validate()
                 }
             }
         }
 
-        fun iconResource(): InputStream {
-            return MediaServer::class.java.getResourceAsStream("/$ICON_FILENAME")
-                ?: throw IllegalStateException("Icon not found.")
-        }
+        fun iconResource() = MediaServer::class.java.getResourceAsStream("/$ICON_FILENAME")
+            ?: throw IllegalStateException("Icon not found.")
     }
 }
 

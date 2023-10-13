@@ -1,19 +1,17 @@
 package net.schowek.nextclouddlna.dlna.transport
 
 import mu.KLogging
-import org.apache.http.*
+import org.apache.http.HttpMessage
+import org.apache.http.HttpVersion
+import org.apache.http.NoHttpResponseException
 import org.apache.http.client.ResponseHandler
 import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase
 import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.config.ConnectionConfig
 import org.apache.http.config.RegistryBuilder
 import org.apache.http.conn.socket.ConnectionSocketFactory
 import org.apache.http.conn.socket.PlainConnectionSocketFactory
-import org.apache.http.entity.ByteArrayEntity
-import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler
 import org.apache.http.impl.client.HttpClients
@@ -24,7 +22,6 @@ import org.jupnp.model.message.*
 import org.jupnp.model.message.header.UpnpHeader
 import org.jupnp.transport.spi.AbstractStreamClient
 import java.nio.charset.Charset
-import java.nio.charset.UnsupportedCharsetException
 import java.util.concurrent.Callable
 
 
@@ -77,40 +74,15 @@ class ApacheStreamClient(
 
     override fun createRequest(requestMessage: StreamRequestMessage): HttpRequestBase {
         val requestOperation = requestMessage.operation
-        val request: HttpRequestBase
-        when (requestOperation.method) {
-            UpnpRequest.Method.GET -> {
-                request = HttpGet(requestOperation.uri)
-            }
-
+        val request = when (requestOperation.method) {
+            UpnpRequest.Method.GET,
+            UpnpRequest.Method.NOTIFY,
+            UpnpRequest.Method.POST,
+            UpnpRequest.Method.UNSUBSCRIBE,
             UpnpRequest.Method.SUBSCRIBE -> {
-                request = object : HttpGet(requestOperation.uri) {
-                    override fun getMethod(): String {
-                        return UpnpRequest.Method.SUBSCRIBE.httpName
-                    }
+                object : HttpGet(requestOperation.uri) {
+                    override fun getMethod() = requestOperation.method.httpName
                 }
-            }
-
-            UpnpRequest.Method.UNSUBSCRIBE -> {
-                request = object : HttpGet(requestOperation.uri) {
-                    override fun getMethod(): String {
-                        return UpnpRequest.Method.UNSUBSCRIBE.httpName
-                    }
-                }
-            }
-
-            UpnpRequest.Method.POST -> {
-                request = HttpPost(requestOperation.uri)
-                (request as HttpEntityEnclosingRequestBase).entity = createHttpRequestEntity(requestMessage)
-            }
-
-            UpnpRequest.Method.NOTIFY -> {
-                request = object : HttpPost(requestOperation.uri) {
-                    override fun getMethod(): String {
-                        return UpnpRequest.Method.NOTIFY.httpName
-                    }
-                }
-                (request as HttpEntityEnclosingRequestBase).entity = createHttpRequestEntity(requestMessage)
             }
 
             else -> throw RuntimeException("Unknown HTTP method: " + requestOperation.httpMethodName)
@@ -143,9 +115,6 @@ class ApacheStreamClient(
     ): Callable<StreamResponseMessage> {
         return Callable<StreamResponseMessage> {
             logger.trace("Sending HTTP request: $requestMessage")
-            if (logger.isTraceEnabled) {
-                StreamsLoggerHelper.logStreamClientRequestMessage(requestMessage)
-            }
             httpClient.execute<StreamResponseMessage>(request, createResponseHandler(requestMessage))
         }
     }
@@ -172,79 +141,50 @@ class ApacheStreamClient(
         clientConnectionManager.shutdown()
     }
 
-    private fun createHttpRequestEntity(upnpMessage: UpnpMessage<*>): HttpEntity {
-        return if (upnpMessage.bodyType == UpnpMessage.BodyType.BYTES) {
-            logger.trace("Preparing HTTP request entity as byte[]")
-            ByteArrayEntity(upnpMessage.bodyBytes)
-        } else {
-            logger.trace("Preparing HTTP request entity as string")
-            var charset = upnpMessage.contentTypeCharset
-            if (charset == null) {
-                charset = "UTF-8"
-            }
-            try {
-                StringEntity(upnpMessage.bodyString, charset)
-            } catch (ex: UnsupportedCharsetException) {
-                logger.trace("HTTP request does not support charset: {}", charset)
-                throw RuntimeException(ex)
-            }
-        }
-    }
-
     private fun createResponseHandler(requestMessage: StreamRequestMessage?): ResponseHandler<StreamResponseMessage> {
-        return ResponseHandler<StreamResponseMessage> { httpResponse: HttpResponse ->
-            val statusLine = httpResponse.statusLine
+        return ResponseHandler<StreamResponseMessage> { response ->
+            val statusLine = response.statusLine
             logger.trace("Received HTTP response: $statusLine")
 
             // Status
             val responseOperation = UpnpResponse(statusLine.statusCode, statusLine.reasonPhrase)
-
             // Message
             val responseMessage = StreamResponseMessage(responseOperation)
-
             // Headers
-            responseMessage.headers = UpnpHeaders(getHeaders(httpResponse))
-
+            responseMessage.headers = UpnpHeaders(getHeaders(response))
             // Body
-            val entity = httpResponse.entity
-            if (entity == null || entity.contentLength == 0L) {
+            response.entity?.let { entity ->
+                val data = EntityUtils.toByteArray(entity)
+                if (data != null) {
+                    if (responseMessage.isContentTypeMissingOrText) {
+                        logger.trace("HTTP response message contains text entity")
+                        responseMessage.setBodyCharacters(data)
+                    } else {
+                        logger.trace("HTTP response message contains binary entity")
+                        responseMessage.setBody(UpnpMessage.BodyType.BYTES, data)
+                    }
+                } else {
+                    logger.trace("HTTP response message has no entity")
+                }
+                responseMessage
+            } ?: let {
                 logger.trace("HTTP response message has no entity")
                 return@ResponseHandler responseMessage
             }
-            val data = EntityUtils.toByteArray(entity)
-            if (data != null) {
-                if (responseMessage.isContentTypeMissingOrText) {
-                    logger.trace("HTTP response message contains text entity")
-                    responseMessage.setBodyCharacters(data)
-                } else {
-                    logger.trace("HTTP response message contains binary entity")
-                    responseMessage.setBody(UpnpMessage.BodyType.BYTES, data)
-                }
-            } else {
-                logger.trace("HTTP response message has no entity")
-            }
-            if (logger.isTraceEnabled) {
-                StreamsLoggerHelper.logStreamClientResponseMessage(responseMessage, requestMessage)
-            }
-            responseMessage
         }
     }
 
     companion object : KLogging() {
         private fun addHeaders(httpMessage: HttpMessage, headers: Headers) {
-            for ((key, value1) in headers) {
-                for (value in value1) {
-                    httpMessage.addHeader(key, value)
-                }
-            }
+            headers.map { header -> header.value.forEach { httpMessage.addHeader(header.key, it) } }
         }
 
         private fun getHeaders(httpMessage: HttpMessage): Headers {
-            val headers = Headers()
-            for (header in httpMessage.allHeaders) {
-                headers.add(header.name, header.value)
+            return Headers().also { headers ->
+                httpMessage.allHeaders.forEach {
+                    headers.add(it.name, it.value)
+                }
             }
-            return headers
         }
     }
 }

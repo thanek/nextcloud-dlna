@@ -31,24 +31,20 @@ class NodeConverter(
     val externalUrls: ExternalUrls
 ) {
     fun makeSubContainersWithoutTheirSubContainers(n: ContentNode) =
-        n.getNodes().map { node -> makeContainerWithoutSubContainers(node) }.toList()
+        n.nodes.map { node -> makeContainerWithoutSubContainers(node) }.toList()
 
-    fun makeContainerWithoutSubContainers(n: ContentNode): Container {
-        val c = Container()
-        c.setClazz(DIDLObject.Class("object.container"))
-        c.setId("${n.id}")
-        c.setParentID("${n.parentId}")
-        c.setTitle(n.name)
+    fun makeContainerWithoutSubContainers(n: ContentNode) = Container().also { c ->
+        c.clazz = DIDLObject.Class("object.container")
+        c.id = "${n.id}"
+        c.parentID = "${n.parentId}"
+        c.title = n.name
         c.childCount = n.nodeAndItemCount
-        c.setRestricted(true)
-        c.setWriteStatus(NOT_WRITABLE)
+        c.isRestricted = true
+        c.writeStatus = NOT_WRITABLE
         c.isSearchable = true
-        return c
     }
 
-    fun makeItems(n: ContentNode): List<Item> =
-        n.getItems().map { item -> makeItem(item) }.toList()
-
+    fun makeItems(n: ContentNode): List<Item> = n.items.map { item -> makeItem(item) }.toList()
 
     fun makeItem(c: ContentItem): Item {
         val res = Res(c.format.asMimetype(), c.fileLength, externalUrls.contentUrl(c.id))
@@ -58,10 +54,14 @@ class NodeConverter(
             AUDIO -> AudioItem("${c.id}", "${c.parentId}", c.name, "", res)
             else -> throw IllegalArgumentException()
         }.also {
-            val t = c.thumb
-            if (t != null) {
-                val thumbUri: String = externalUrls.contentUrl(t.id)
-                it.addResource(Res(makeProtocolInfo(t.format.asMimetype()), t.fileLength, thumbUri))
+            c.thumb?.let { t ->
+                it.addResource(
+                    Res(
+                        makeProtocolInfo(t.format.asMimetype()),
+                        t.fileLength,
+                        externalUrls.contentUrl(t.id)
+                    )
+                )
             }
         }
     }

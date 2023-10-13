@@ -11,8 +11,6 @@ class ExternalUrls(private val serverInfoProvider: ServerInfoProvider) {
 
     val selfURI : URI get() = URI(selfUriString)
 
-    fun contentUrl(id: Int): String {
-        return "$selfUriString/c/$id"
-    }
+    fun contentUrl(id: Int) = "$selfUriString/c/$id"
 }
 

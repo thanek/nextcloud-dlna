@@ -34,11 +34,5 @@ class RegistryImplWithOverrides(
         } else super.getResource(pathQuery)
     }
 
-    fun maintain() {
-        logger.info { "REGISTRY MAINTAIN" }
-        Thread(registryMaintainer).start()
-        logger.info { "REGISTRY MAINTAIN  DONE" }
-    }
-
     companion object : KLogging()
 }

@@ -71,39 +71,27 @@ class DlnaService(
     inner class MyUpnpService(
         configuration: UpnpServiceConfiguration
     ) : UpnpServiceImpl(configuration) {
-        override fun createRegistry(pf: ProtocolFactory): Registry {
-            return RegistryImplWithOverrides(this)
-        }
+        override fun createRegistry(pf: ProtocolFactory) =
+            RegistryImplWithOverrides(this)
     }
 
     private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration(serverInfoProvider.port) {
-        override fun createStreamClient(): StreamClient<*> {
-            return ApacheStreamClient(
-                ApacheStreamClientConfiguration(syncProtocolExecutorService)
-            )
-        }
+        override fun createStreamClient() =
+            ApacheStreamClient(ApacheStreamClientConfiguration(syncProtocolExecutorService))
 
-        override fun createStreamServer(networkAddressFactory: NetworkAddressFactory): StreamServer<*> {
-            return MyStreamServerImpl(
-                MyStreamServerConfiguration(networkAddressFactory.streamListenPort)
-            )
-        }
+        override fun createStreamServer(networkAddressFactory: NetworkAddressFactory) =
+            MyStreamServerImpl(MyStreamServerConfiguration(networkAddressFactory.streamListenPort))
 
-        override fun createNetworkAddressFactory(
-            streamListenPort: Int,
-            multicastResponsePort: Int
-        ): NetworkAddressFactory {
-            return MyNetworkAddressFactory(streamListenPort, multicastResponsePort)
-        }
+        override fun createNetworkAddressFactory(streamListenPort: Int, multicastResponsePort: Int) =
+            MyNetworkAddressFactory(streamListenPort, multicastResponsePort)
     }
 
     inner class MyNetworkAddressFactory(
         streamListenPort: Int,
         multicastResponsePort: Int
     ) : NetworkAddressFactoryImpl(streamListenPort, multicastResponsePort) {
-        override fun isUsableAddress(iface: NetworkInterface, address: InetAddress): Boolean {
-            return addressesToBind.contains(address)
-        }
+        override fun isUsableAddress(iface: NetworkInterface, address: InetAddress) =
+            addressesToBind.contains(address)
     }
 
     companion object : KLogging()

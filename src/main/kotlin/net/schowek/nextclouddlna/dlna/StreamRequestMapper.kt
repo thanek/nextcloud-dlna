@@ -21,7 +21,6 @@ class StreamRequestMapper {
             throw RuntimeException("Method not supported: {}" + request.method)
         }
 
-        requestMessage.connection = MyHttpServerConnection(request)
         requestMessage.headers = createHeaders(request)
         return requestMessage
     }
@@ -36,18 +35,6 @@ class StreamRequestMapper {
             }
         }
         return UpnpHeaders(headers)
-    }
-
-    inner class MyHttpServerConnection(
-        private val request: HttpServletRequest
-    ) : Connection {
-        override fun isOpen() = true
-
-        override fun getRemoteAddress(): InetAddress? =
-            request.remoteAddr?.let { InetAddress.getByName(request.remoteAddr) }
-
-        override fun getLocalAddress(): InetAddress? =
-            request.localAddr?.let { InetAddress.getByName(request.localAddr) }
     }
 
     companion object : KLogging()
