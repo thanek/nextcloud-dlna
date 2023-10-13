@@ -39,7 +39,7 @@ class NodeConverter(
         c.setId("${n.id}")
         c.setParentID("${n.parentId}")
         c.setTitle(n.name)
-        c.childCount = n.getNodeAndItemCount()
+        c.childCount = n.nodeAndItemCount
         c.setRestricted(true)
         c.setWriteStatus(NOT_WRITABLE)
         c.isSearchable = true
@@ -67,20 +67,18 @@ class NodeConverter(
     }
 
     companion object {
+        private val DLNA_THUMBNAIL_TYPES = unmodifiableList(listOf(JPEG_TN, PNG_TN))
+        private val MIME_TYPE_TO_DLNA_THUMBNAIL_TYPE = DLNA_THUMBNAIL_TYPES.associateBy { it.contentFormat }
+
         private fun makeProtocolInfo(artMimeType: MimeType): DLNAProtocolInfo {
             val attributes = EnumMap<DLNAAttribute.Type, DLNAAttribute<*>>(
                 DLNAAttribute.Type::class.java
             )
-            val dlnaThumbnailProfile = findDlnaThumbnailProfile(artMimeType)
-            if (dlnaThumbnailProfile != null) {
-                attributes[DLNAAttribute.Type.DLNA_ORG_PN] = DLNAProfileAttribute(dlnaThumbnailProfile)
+            findDlnaThumbnailProfile(artMimeType)?.let {
+                attributes[DLNAAttribute.Type.DLNA_ORG_PN] = DLNAProfileAttribute(it)
             }
             return DLNAProtocolInfo(Protocol.HTTP_GET, ProtocolInfo.WILDCARD, artMimeType.toString(), attributes)
         }
-
-        private val DLNA_THUMBNAIL_TYPES: Collection<DLNAProfiles> = unmodifiableList(listOf(JPEG_TN, PNG_TN))
-        private val MIME_TYPE_TO_DLNA_THUMBNAIL_TYPE: Map<String, DLNAProfiles> =
-            DLNA_THUMBNAIL_TYPES.associateBy { it.contentFormat }
 
         private fun findDlnaThumbnailProfile(mimeType: MimeType): DLNAProfiles? {
             return MIME_TYPE_TO_DLNA_THUMBNAIL_TYPE[mimeType.toString()]

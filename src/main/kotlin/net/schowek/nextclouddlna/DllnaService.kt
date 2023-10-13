@@ -15,6 +15,7 @@ import org.jupnp.UpnpServiceConfiguration
 import org.jupnp.UpnpServiceImpl
 import org.jupnp.model.message.StreamRequestMessage
 import org.jupnp.model.message.StreamResponseMessage
+import org.jupnp.model.message.UpnpResponse
 import org.jupnp.model.meta.LocalDevice
 import org.jupnp.protocol.ProtocolFactory
 import org.jupnp.protocol.ProtocolFactoryImpl
@@ -59,6 +60,9 @@ class DlnaService(
         return with(upnpService.protocolFactory.createReceivingSync(requestMsg)) {
             run()
             outputMessage
+                ?: StreamResponseMessage(UpnpResponse.Status.NOT_FOUND).also {
+                    logger.warn { "Could not get response for ${requestMsg.operation.method} ${requestMsg}" }
+                }
         }.also {
             logger.debug { "Response: ${it.operation.statusCode} ${it.body}" }
         }

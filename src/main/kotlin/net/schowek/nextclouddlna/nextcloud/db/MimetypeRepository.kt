@@ -12,7 +12,7 @@ interface MimetypeRepository : JpaRepository<Mimetype, Int>
 
 @Entity
 @Table(name = "oc_mimetypes")
-class Mimetype(
+data class Mimetype(
     @Id
     val id: Int,
     val mimetype: String

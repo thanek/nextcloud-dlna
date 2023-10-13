@@ -19,6 +19,11 @@ class ContentNode(
     private val nodes: MutableList<ContentNode> = ArrayList()
     private val items: MutableList<ContentItem> = ArrayList()
 
+
+    private val nodeCount: Int get() = nodes.size
+    private val itemCount: Int get() = items.size
+    val nodeAndItemCount: Int get() = nodeCount + itemCount
+
     fun addItem(item: ContentItem) {
         items.add(item)
     }
@@ -35,9 +40,4 @@ class ContentNode(
         return nodes
     }
 
-    fun getNodeCount(): Int = nodes.size
-
-    fun getItemCount(): Int = items.size
-
-    fun getNodeAndItemCount(): Int = getNodeCount() + getItemCount()
 }

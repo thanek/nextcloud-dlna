@@ -13,7 +13,7 @@ interface GroupFolderRepository : JpaRepository<GroupFolder, Int>
 
 @Entity
 @Table(name = "oc_group_folders")
-class GroupFolder(
+data class GroupFolder(
     @Id
     @Column(name = "folder_id")
     val id: Int,

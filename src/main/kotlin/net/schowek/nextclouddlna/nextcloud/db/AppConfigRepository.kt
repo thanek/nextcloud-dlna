@@ -20,7 +20,7 @@ interface AppConfigRepository : JpaRepository<AppConfig, AppConfigId> {
 
 @Entity
 @Table(name = "oc_appconfig")
-class AppConfig(
+data class AppConfig(
     @EmbeddedId
     val id: AppConfigId,
     @field:Column(name = "configvalue")
@@ -28,7 +28,7 @@ class AppConfig(
 )
 
 @Embeddable
-class AppConfigId(
+data class AppConfigId(
     @Column(name = "appid")
     val appId: String,
     @Column(name = "configkey")

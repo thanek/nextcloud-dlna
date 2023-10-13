@@ -28,12 +28,10 @@ class StreamRequestMapper {
 
     private fun createHeaders(request: HttpServletRequest): UpnpHeaders {
         val headers = mutableMapOf<String, List<String>>()
-        with(request.headerNames) {
-            if (this != null) {
-                while (hasMoreElements()) {
-                    with(nextElement()) {
-                        headers[this] = listOf(request.getHeader(this))
-                    }
+        request.headerNames?.let {
+            while (it.hasMoreElements()) {
+                with(it.nextElement()) {
+                    headers[this] = listOf(request.getHeader(this))
                 }
             }
         }
@@ -43,17 +41,13 @@ class StreamRequestMapper {
     inner class MyHttpServerConnection(
         private val request: HttpServletRequest
     ) : Connection {
-        override fun isOpen(): Boolean {
-            return true
-        }
+        override fun isOpen() = true
 
-        override fun getRemoteAddress(): InetAddress? {
-            return if (request.remoteAddr != null) InetAddress.getByName(request.remoteAddr) else null
-        }
+        override fun getRemoteAddress(): InetAddress? =
+            request.remoteAddr?.let { InetAddress.getByName(request.remoteAddr) }
 
-        override fun getLocalAddress(): InetAddress? {
-            return if (request.localAddr != null) InetAddress.getByName(request.localAddr) else null
-        }
+        override fun getLocalAddress(): InetAddress? =
+            request.localAddr?.let { InetAddress.getByName(request.localAddr) }
     }
 
     companion object : KLogging()

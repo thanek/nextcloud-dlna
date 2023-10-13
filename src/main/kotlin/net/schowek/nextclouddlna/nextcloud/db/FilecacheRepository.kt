@@ -42,7 +42,7 @@ interface FilecacheRepository : JpaRepository<Filecache, String> {
 
 @Entity
 @Table(name = "oc_filecache")
-class Filecache(
+data class Filecache(
     @Id
     @field:Column(name = "fileid")
     val id: Int,
@@ -62,7 +62,7 @@ class Filecache(
 
 @Entity
 @Table(name = "oc_mounts")
-class Mount(
+data class Mount(
     @Id
     val id: Int,
     val storageId: Int,
