@@ -15,6 +15,10 @@ java {
     sourceCompatibility = '17'
 }
 
+jar {
+    enabled = false
+}
+
 repositories {
     mavenCentral()
 }

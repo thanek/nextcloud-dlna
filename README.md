@@ -31,6 +31,26 @@ Available env variables with their default values that you can overwrite:
 | NEXTCLOUD_DB_PASS            | nextcloud      | nextcloud database password                             |
 
 
+## Running in Docker
+You can build your Docker image using the `docker build -t nextcloud-dlna .` command. Next, you need to run the docker 
+image with the `net=host` option e.g:
+
+```
+docker run -d \
+--name="nextcloud-dlna" \
+--net=host \
+-v /path/to/nextcloud/app/ending/with/data:/nextcloud \
+-e NEXTCLOUD_DATA_DIR=/nextcloud \
+-e NEXTCLOUD_DB_HOST='<your_host_ip_here>' \
+-e NEXTCLOUD_DB_PASS='<your_nextcloud_db_pass_here>' \
+nextcloud-dlna
+```
+
+You can pass to the container other env variables that are listed above.
+
+Note that it would not work on Mac OS since docker is a Linux container and the `host` networking mode doesn't actually 
+share the host's network interfaces.
+
 ### Code used 
 
 Some java code was taken from https://github.com/haku/dlnatoad

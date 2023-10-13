@@ -33,5 +33,22 @@ data class AppConfigId(
     val appId: String,
     @Column(name = "configkey")
     val configKey: String
-)
+
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AppConfigId
+
+        if (appId != other.appId) return false
+        return configKey == other.configKey
+    }
+
+    override fun hashCode(): Int {
+        var result = appId.hashCode()
+        result = 31 * result + configKey.hashCode()
+        return result
+    }
+}
 
