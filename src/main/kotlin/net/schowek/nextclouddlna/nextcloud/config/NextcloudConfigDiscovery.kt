@@ -1,31 +1,28 @@
-package net.schowek.nextclouddlna.nextcloud
+package net.schowek.nextclouddlna.nextcloud.config
 
-import jakarta.annotation.PostConstruct
 import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.db.AppConfigRepository
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.io.File
-import java.util.*
 import java.util.Arrays.*
 import java.util.Objects.*
 
 
 @Component
 class NextcloudConfigDiscovery(
-    @Value("\${nextcloud.filesDir}")
-    val nextcloudDir: String,
-    val appConfigRepository: AppConfigRepository
+    val appConfigRepository: AppConfigRepository,
+    val nextcloudDirProvider: NextcloudAppPathProvider
 ) {
-    final val appDataDir: String = findAppDataDir()
-    final val supportsGroupFolders: Boolean = checkGroupFoldersSupport()
+    val appDataDir: String = findAppDataDir()
+    val nextcloudDir: File get() = nextcloudDirProvider.nextcloudDir
+    val supportsGroupFolders: Boolean = checkGroupFoldersSupport()
 
     private fun checkGroupFoldersSupport(): Boolean {
         return "yes" == appConfigRepository.getValue("groupfolders", "enabled")
     }
 
     private fun findAppDataDir(): String {
-        return stream(requireNonNull(File(nextcloudDir).listFiles { f ->
+        return stream(requireNonNull(nextcloudDir.listFiles { f ->
             f.isDirectory && f.name.matches(APPDATA_NAME_PATTERN.toRegex())
         })).findFirst().orElseThrow().name
             .also {

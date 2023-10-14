@@ -2,6 +2,7 @@ package net.schowek.nextclouddlna.nextcloud
 
 import jakarta.annotation.PostConstruct
 import mu.KLogging
+import net.schowek.nextclouddlna.nextcloud.config.NextcloudConfigDiscovery
 import net.schowek.nextclouddlna.nextcloud.content.ContentItem
 import net.schowek.nextclouddlna.nextcloud.content.ContentNode
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
@@ -96,9 +97,9 @@ class NextcloudDB(
     private fun buildPath(f: Filecache): String {
         return if (storageUsersMap.containsKey(f.storage)) {
             val userName: String? = storageUsersMap[f.storage]
-            "${nextcloudConfig.nextcloudDir}/$userName/${f.path}"
+            "${nextcloudConfig.nextcloudDir.absolutePath}/$userName/${f.path}"
         } else {
-            "${nextcloudConfig.nextcloudDir}/${f.path}"
+            "${nextcloudConfig.nextcloudDir.absolutePath}/${f.path}"
         }
     }
 

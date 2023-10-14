@@ -115,7 +115,7 @@ class ApacheStreamClient(
     ): Callable<StreamResponseMessage> {
         return Callable<StreamResponseMessage> {
             logger.trace("Sending HTTP request: $requestMessage")
-            httpClient.execute<StreamResponseMessage>(request, createResponseHandler(requestMessage))
+            httpClient.execute(request, createResponseHandler())
         }
     }
 
@@ -141,7 +141,7 @@ class ApacheStreamClient(
         clientConnectionManager.shutdown()
     }
 
-    private fun createResponseHandler(requestMessage: StreamRequestMessage?): ResponseHandler<StreamResponseMessage> {
+    private fun createResponseHandler(): ResponseHandler<StreamResponseMessage> {
         return ResponseHandler<StreamResponseMessage> { response ->
             val statusLine = response.statusLine
             logger.trace("Received HTTP response: $statusLine")

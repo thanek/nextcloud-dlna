@@ -3,17 +3,12 @@ package net.schowek.nextclouddlna.util
 import spock.lang.Specification
 
 class ExternalUrlsTest extends Specification {
-    def inetAddress = Mock(InetAddress)
     def serverInfoProvider = Mock(ServerInfoProvider)
-
-    def setup() {
-        serverInfoProvider.address >> inetAddress
-    }
 
     def "should generate main url for the service"() {
         given:
-        inetAddress.getHostAddress() >> host
         serverInfoProvider.getPort() >> port
+        serverInfoProvider.getHost() >> host
         def sut = new ExternalUrls(serverInfoProvider)
 
         when:
@@ -30,8 +25,8 @@ class ExternalUrlsTest extends Specification {
 
     def "should generate content urls"() {
         given:
-        inetAddress.getHostAddress() >> host
         serverInfoProvider.getPort() >> port
+        serverInfoProvider.getHost() >> host
         def sut = new ExternalUrls(serverInfoProvider)
 
         when:

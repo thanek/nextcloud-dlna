@@ -21,17 +21,19 @@ class MediaServer(
     private val friendlyName: String,
     externalUrls: ExternalUrls
 ) {
-    final val device = LocalDevice(
+    val device = LocalDevice(
         DeviceIdentity(uniqueSystemIdentifier("Nextcloud-DLNA-MediaServer"), ADVERTISEMENT_AGE_IN_S),
         UDADeviceType(DEVICE_TYPE, VERSION),
         DeviceDetails(friendlyName, externalUrls.selfURI),
         createDeviceIcon(),
         arrayOf(contentDirectoryService, connectionManagerService)
     )
+    val serviceIdentifier: String get() = device.identity.udn.identifierString
 
     init {
         logger.info("uniqueSystemIdentifier: {} ({})", device.identity.udn, friendlyName)
     }
+
 
     companion object : KLogging() {
         const val ICON_FILENAME = "icon.png"

@@ -24,6 +24,11 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    integrationTestImplementation.extendsFrom(testImplementation)
+    integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+}
+
 dependencies {
     implementation('org.springframework.boot:spring-boot-starter-web') {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
@@ -41,13 +46,14 @@ dependencies {
     implementation 'org.jupnp:org.jupnp.support:2.7.1'
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 
-    implementation 'org.apache.groovy:groovy:4.0.15'
+    testImplementation 'org.apache.groovy:groovy:4.0.15'
 
     testImplementation('org.spockframework:spock-core:2.4-M1-groovy-4.0')
     testImplementation('org.spockframework:spock-spring:2.4-M1-groovy-4.0')
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+    testImplementation('com.h2database:h2')
 }
 
 tasks.withType(KotlinCompile).configureEach {
@@ -62,17 +68,22 @@ tasks.named('test') {
 }
 
 sourceSets {
-    integration {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-        }
+    integrationTest {
+        groovy.srcDir "$projectDir/src/integration/groovy"
+        resources.srcDir "$projectDir/src/integration/resources"
+        compileClasspath += main.output + test.output
+        runtimeClasspath += main.output + test.output
     }
 }
 
 tasks.register('integrationTest', Test) {
+    useJUnitPlatform()
     description = "Run integration tests"
     group = "verification"
-    testClassesDirs = sourceSets.integration.output.classesDirs
-    classpath = sourceSets.integration.runtimeClasspath
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    mustRunAfter tasks.test
 }
+
+check.dependsOn integrationTest
+

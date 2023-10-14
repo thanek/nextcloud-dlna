@@ -37,7 +37,7 @@ class DlnaService(
     private val mediaServer: MediaServer,
     private val serverInfoProvider: ServerInfoProvider,
 ) {
-    private val addressesToBind: List<InetAddress> = listOf(serverInfoProvider.address!!)
+    private val addressesToBind: List<String> = listOf(serverInfoProvider.host)
     var upnpService = MyUpnpService(MyUpnpServiceConfiguration())
 
     fun start() {
@@ -91,7 +91,7 @@ class DlnaService(
         multicastResponsePort: Int
     ) : NetworkAddressFactoryImpl(streamListenPort, multicastResponsePort) {
         override fun isUsableAddress(iface: NetworkInterface, address: InetAddress) =
-            addressesToBind.contains(address)
+            addressesToBind.contains(address.hostAddress)
     }
 
     companion object : KLogging()

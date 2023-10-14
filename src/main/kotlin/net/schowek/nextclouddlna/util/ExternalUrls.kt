@@ -10,8 +10,8 @@ class ExternalUrls(
 ) {
     val selfUriString: String =
         when (serverInfoProvider.port) {
-            80 -> "http://${serverInfoProvider.address!!.hostAddress}"
-            else -> "http://${serverInfoProvider.address!!.hostAddress}:${serverInfoProvider.port}"
+            80 -> "http://${serverInfoProvider.host}"
+            else -> "http://${serverInfoProvider.host}:${serverInfoProvider.port}"
         }
 
 
