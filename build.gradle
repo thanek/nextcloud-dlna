@@ -6,6 +6,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.8.22'
     id 'org.jetbrains.kotlin.plugin.spring' version '1.8.22'
     id "org.jetbrains.kotlin.plugin.jpa" version '1.8.22'
+    id 'groovy'
 }
 
 group = 'net.schowek'
@@ -40,10 +41,16 @@ dependencies {
     implementation 'org.jupnp:org.jupnp.support:2.7.1'
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.apache.groovy:groovy:4.0.15'
+
+    testImplementation('org.spockframework:spock-core:2.4-M1-groovy-4.0')
+    testImplementation('org.spockframework:spock-spring:2.4-M1-groovy-4.0')
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
 }
 
-tasks.withType(KotlinCompile) {
+tasks.withType(KotlinCompile).configureEach {
     kotlinOptions {
         freeCompilerArgs += '-Xjsr305=strict'
         jvmTarget = '17'
@@ -52,4 +59,20 @@ tasks.withType(KotlinCompile) {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+sourceSets {
+    integration {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+        }
+    }
+}
+
+tasks.register('integrationTest', Test) {
+    description = "Run integration tests"
+    group = "verification"
+    testClassesDirs = sourceSets.integration.output.classesDirs
+    classpath = sourceSets.integration.runtimeClasspath
 }

@@ -5,11 +5,17 @@ import java.net.URI
 
 
 @Component
-class ExternalUrls(private val serverInfoProvider: ServerInfoProvider) {
+class ExternalUrls(
+    serverInfoProvider: ServerInfoProvider
+) {
     val selfUriString: String =
-        "http://" + serverInfoProvider.address!!.hostAddress + ":" + serverInfoProvider.port
+        when (serverInfoProvider.port) {
+            80 -> "http://${serverInfoProvider.address!!.hostAddress}"
+            else -> "http://${serverInfoProvider.address!!.hostAddress}:${serverInfoProvider.port}"
+        }
 
-    val selfURI : URI get() = URI(selfUriString)
+
+    val selfURI: URI get() = URI(selfUriString)
 
     fun contentUrl(id: Int) = "$selfUriString/c/$id"
 }
