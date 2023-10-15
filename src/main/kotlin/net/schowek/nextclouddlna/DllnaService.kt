@@ -2,7 +2,6 @@ package net.schowek.nextclouddlna
 
 import jakarta.annotation.PreDestroy
 import mu.KLogging
-import net.schowek.nextclouddlna.dlna.RegistryImplWithOverrides
 import net.schowek.nextclouddlna.dlna.media.MediaServer
 import net.schowek.nextclouddlna.dlna.transport.ApacheStreamClient
 import net.schowek.nextclouddlna.dlna.transport.ApacheStreamClientConfiguration
@@ -10,21 +9,15 @@ import net.schowek.nextclouddlna.dlna.transport.MyStreamServerConfiguration
 import net.schowek.nextclouddlna.dlna.transport.MyStreamServerImpl
 import net.schowek.nextclouddlna.util.ServerInfoProvider
 import org.jupnp.DefaultUpnpServiceConfiguration
-import org.jupnp.UpnpService
 import org.jupnp.UpnpServiceConfiguration
 import org.jupnp.UpnpServiceImpl
 import org.jupnp.model.message.StreamRequestMessage
 import org.jupnp.model.message.StreamResponseMessage
 import org.jupnp.model.message.UpnpResponse
-import org.jupnp.model.meta.LocalDevice
 import org.jupnp.protocol.ProtocolFactory
-import org.jupnp.protocol.ProtocolFactoryImpl
-import org.jupnp.protocol.async.SendingNotificationAlive
-import org.jupnp.registry.Registry
+import org.jupnp.registry.RegistryImpl
 import org.jupnp.transport.impl.NetworkAddressFactoryImpl
 import org.jupnp.transport.spi.NetworkAddressFactory
-import org.jupnp.transport.spi.StreamClient
-import org.jupnp.transport.spi.StreamServer
 import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -71,8 +64,7 @@ class DlnaService(
     inner class MyUpnpService(
         configuration: UpnpServiceConfiguration
     ) : UpnpServiceImpl(configuration) {
-        override fun createRegistry(pf: ProtocolFactory) =
-            RegistryImplWithOverrides(this)
+        override fun createRegistry(pf: ProtocolFactory) = RegistryImpl(this)
     }
 
     private inner class MyUpnpServiceConfiguration : DefaultUpnpServiceConfiguration(serverInfoProvider.port) {

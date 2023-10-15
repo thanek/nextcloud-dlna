@@ -2,9 +2,10 @@ package net.schowek.nextclouddlna.dlna
 
 import jakarta.servlet.http.HttpServletRequest
 import mu.KLogging
-import org.jupnp.model.message.*
+import org.jupnp.model.message.StreamRequestMessage
+import org.jupnp.model.message.UpnpHeaders
+import org.jupnp.model.message.UpnpRequest
 import org.springframework.stereotype.Component
-import java.net.InetAddress
 import java.net.URI
 
 @Component
