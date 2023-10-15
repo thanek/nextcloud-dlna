@@ -3,13 +3,17 @@ package net.schowek.nextclouddlna.dlna
 import jakarta.servlet.http.HttpServletRequest
 import mu.KLogging
 import org.jupnp.model.message.StreamRequestMessage
+import org.jupnp.model.message.StreamResponseMessage
 import org.jupnp.model.message.UpnpHeaders
 import org.jupnp.model.message.UpnpRequest
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatusCode
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import java.net.URI
 
 @Component
-class StreamRequestMapper {
+class StreamMessageMapper {
     fun map(request: HttpServletRequest): StreamRequestMessage {
         val requestMessage = StreamRequestMessage(
             UpnpRequest.Method.getByHttpName(request.method),
@@ -22,11 +26,25 @@ class StreamRequestMapper {
             throw RuntimeException("Method not supported: {}" + request.method)
         }
 
-        requestMessage.headers = createHeaders(request)
+        requestMessage.headers = upnpHeaders(request)
         return requestMessage
     }
 
-    private fun createHeaders(request: HttpServletRequest): UpnpHeaders {
+    fun map(response: StreamResponseMessage): ResponseEntity<Any> {
+        return with(response) {
+            ResponseEntity(
+                body,
+                HttpHeaders().also { h ->
+                    headers.entries.forEach { e ->
+                        h.add(e.key, e.value.joinToString { it })
+                    }
+                },
+                HttpStatusCode.valueOf(operation.statusCode)
+            )
+        }
+    }
+
+    private fun upnpHeaders(request: HttpServletRequest): UpnpHeaders {
         val headers = mutableMapOf<String, List<String>>()
         request.headerNames?.let {
             while (it.hasMoreElements()) {

@@ -5,8 +5,8 @@ import org.jupnp.model.message.UpnpRequest
 import org.springframework.mock.web.MockHttpServletRequest
 import spock.lang.Specification
 
-class StreamRequestMapperTest extends Specification {
-    def sut = new StreamRequestMapper()
+class StreamMessageMapperTest extends Specification {
+    def sut = new StreamMessageMapper()
 
     def "should map servlet request to streamRequestMessage"() {
         given:
