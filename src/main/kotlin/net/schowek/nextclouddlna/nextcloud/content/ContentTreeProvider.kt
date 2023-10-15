@@ -18,9 +18,13 @@ class ContentTreeProvider(
 
     @Scheduled(fixedDelay = REBUILD_TREE_DELAY_IN_MS, initialDelay = REBUILD_TREE_INIT_DELAY_IN_MS)
     final fun rebuildTree() {
+        rebuildTree(false)
+    }
+
+    final fun rebuildTree(force: Boolean) {
         val maxMtime: Long = nextcloudDB.maxMtime()
         val now = Instant.now().epochSecond
-        if (lastMTime < maxMtime || lastMTime + MAX_REBUILD_OFFSET_IN_S > now) {
+        if (force || lastMTime < maxMtime || lastMTime + MAX_REBUILD_OFFSET_IN_S > now) {
             logger.info("ContentTree seems to be outdated - Loading...")
             this.tree = buildContentTree()
             lastMTime = maxMtime

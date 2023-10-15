@@ -15,9 +15,9 @@ class NextcloudConfigDiscovery(
 ) {
     val appDataDir: String = findAppDataDir()
     val nextcloudDir: File get() = nextcloudDirProvider.nextcloudDir
-    val supportsGroupFolders: Boolean = checkGroupFoldersSupport()
+    val supportsGroupFolders: Boolean get() = checkGroupFoldersSupport()
 
-    private fun checkGroupFoldersSupport(): Boolean {
+    fun checkGroupFoldersSupport(): Boolean {
         return "yes" == appConfigRepository.getValue("groupfolders", "enabled")
     }
 
