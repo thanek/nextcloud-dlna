@@ -9,7 +9,7 @@ class ContentControllerIntTest extends IntegrationSpecification {
 
     def "should process GET request for content"() {
         when:
-        ResponseEntity<byte[]> response = restTemplate().getForEntity(urlWithPort("/c/19"), byte[]);
+        ResponseEntity<byte[]> response = restTemplate().getForEntity(urlWithPort("/c/16"), byte[]);
 
         then:
         response.statusCode == HttpStatus.OK
@@ -20,7 +20,7 @@ class ContentControllerIntTest extends IntegrationSpecification {
             assert it.containsKey('transfermode.dlna.org')
             assert it.containsKey('realtimeinfo.dlna.org')
         }
-        response.body.length == 2170375
+        response.body.length == 593508
     }
 
     def "should return 404 if content does not exist"() {

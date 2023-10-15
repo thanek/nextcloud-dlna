@@ -15,24 +15,39 @@ INSERT INTO `oc_filecache` VALUES
 (15,1,'files/photos','d01bb67e7b71dd49fd06bad922f521c9',2,'photos',2,1,5656462,1695737827,1695737658,0,0,'',31,''),
 (16,1,'files/photos/Birdie.jpg','cd31c7af3a0ec6e15782b5edd2774549',15,'Birdie.jpg',12,10,593508,1695737656,1695737656,0,0,'',27,''),
 (17,1,'files/photos/Frog.jpg','d6219add1a9129ed0c1513af985e2081',15,'Frog.jpg',12,10,457744,1695737656,1695737656,0,0,'',27,''),
-(18,1,'files/photos/Gorilla.jpg','6d5f5956d8ff76a5f290cebb56402789',15,'Gorilla.jpg',12,10,474653,1695737656,1695737656,0,0,'',27,''),
-(19,1,'files/photos/Library.jpg','0b785d02a19fc00979f82f6b54a05805',15,'Library.jpg',12,10,2170375,1695737657,1695737657,0,0,'',27,''),
 
 (387,3,'files','45b963397aa40d4a0063e0d85e4fe7a1',384,'files',2,1,9670097,1695740237,1695740237,0,0,'',31,''),
 (396,3,'files/pictures','d01bb67e7b71dd49fd06bad922f521c9',387,'pictures',2,1,5656463,1695740165,1695740165,0,0,'',31,''),
 (397,3,'files/pictures/Steps.jpg','7b2ca8d05bbad97e00cbf5833d43e912',396,'Steps.jpg',12,10,567689,1695737658,1695737658,0,0,'',27,''),
 (398,3,'files/pictures/Toucan.jpg','681d1e78f46a233e12ecfa722cbc2aef',396,'Toucan.jpg',12,10,167989,1695737658,1695737658,0,0,'',27,''),
-(399,3,'files/pictures/Vineyard.jpg','14e5f2670b0817614acd52269d971db8',396,'Vineyard.jpg',12,10,427030,1695737658,1695737658,0,0,'',27,''),
-
-(4,2,'appdata_integration','bed7fa8a60170b5d88c9da5e69eaeb5a',3,'appdata_integration',2,1,10274496,1695737790,1695737790,0,0,'',31,''),
-(69,2,'appdata_integration/preview','e771733d5f59ead277f502588282d693',4,'preview',2,1,5153144,1695738765,1695738765,0,0,'',31,''),
 
 (584,2,'__groupfolders','29ff0edf73a32cb03e437d88fd049245',3,'__groupfolders',2,1,3012412,1696702221,1696702221,0,0,'',31,''),
 (586,2,'__groupfolders/1','e46cc72327dfc3ccaf32f0a167e6c6d1',584,'1',2,1,3012412,1696695701,1696695701,0,0,'',31,''),
 (587,2,'__groupfolders/Nextcloud community.jpg','b9b3caef83a2a1c20354b98df6bcd9d0',586,'Nextcloud community.jpg',12,10,797325,1695737657,1695737657,0,0,
-'',27,'');
+'',27,''),
 
+(4,2,'appdata_integration','bed7fa8a60170b5d88c9da5e69eaeb5a',3,'appdata_integration',2,1,10274496,1695737790,1695737790,0,0,'',31,''),
+(69,2,'appdata_integration/preview','e771733d5f59ead277f502588282d693',4,'preview',2,1,5153144,1695738765,1695738765,0,0,'',31,''),
+(118,2,'appdata_integration/preview/c','7a4d3ccae601e9499e1ab6c444389190',69,'c',2,1,182196,1695738765,1695738765,0,0,'',31,''),
+(266,2,'appdata_integration/preview/c/5','06062a1c21b0baf285ceeb0f6cc5ccf5',118,'5',2,1,52904,1695738113,1695738113,0,0,'',31,''),
+(267,2,'appdata_integration/preview/c/5/1','caef481eed68975e892a313693abbc1d',266,'1',2,1,52904,1695738113,1695738113,0,0,'',31,''),
+(268,2,'appdata_integration/preview/c/5/1/c','e5373ed53baeecb521bfaf52e7732241',267,'c',2,1,52904,1695738113,1695738113,0,0,'',31,''),
+(269,2,'appdata_integration/preview/c/5/1/c/e','e91eaac3bf03ce5442e638b0e9c82d01',268,'e',2,1,52904,1695738113,1695738113,0,0,'',31,''),
+(270,2,'appdata_integration/preview/c/5/1/c/e/4','efb8bf57b9f71e52d73f51671eb4cc83',269,'4',2,1,52904,1695738113,1695738113,0,0,'',31,''),
+(271,2,'appdata_integration/preview/c/5/1/c/e/4/1','515ef6dc4c2b8c8abeff3b29ad645aa4',270,'1',2,1,52904,1695738113,1695738113,0,0,'',31,''),
 
+(272,2,'appdata_integration/preview/c/5/1/c/e/4/1/13','3ca72f7aea8335c7a4bd43c2e4bf89ab',271,'13',2,1,52904,1696697007,1696697007,0,0,'',31,''),
+(273,2,'appdata_integration/preview/c/5/1/c/e/4/1/13/1000-563-max.jpg','de54b3c7b20873a40a485bc666faaf8c',272,'1000-563-max.jpg',12,10,28820,1695738114,1695738114,0,0,'',27,''),
+(694,2,'appdata_integration/preview/c/5/1/c/e/4/1/13/455-256.jpg','08aa43b18c0bf4824edc33e8b852ab08',272,'455-256.jpg',12,10,9399,1696697007,1696697007,0,0,'',27,''),
+
+(155,2,'appdata_integration/preview/c/5/1/c/e/4/1/14','bb5cbf8f27a56a12e83245d5532d0381',271,'14',2,1,107111,1696697008,1696697008,0,0,'',31,''),
+(164,2,'appdata_integration/preview/c/5/1/c/e/4/1/14/500-500-max.png','15b68a8c62dab8e7c3773ce0d1ac4f43',155,'500-500-max.png',11,10,50545,1695737792,1695737792,0,0,'',27,''),
+
+(803,2,'appdata_integration/preview/c/7/4/d/9/7/b/16','71e9a2780187bcba09819c38341af594',271,'16',2,1,129292,1696698525,1696698525,0,0,'',31,''),
+(804,2,'appdata_integration/preview/c/7/4/d/9/7/b/16/1000-667-max.jpg','c6df2f52ea6e2bce26b0c0c9cb99b7a5',803,'1000-667-max.jpg',12,10,81421,1696698525,1696698525,0,0,'',27,''),
+
+(811,2,'appdata_integration/preview/7/0/e/f/d/f/2/17','9fbd157aa2c41b17eb7ec32e9f93551f',271,'17',2,1,84401,1696698525,1696698525,0,0,'',31,''),
+(812,2,'appdata_integration/preview/7/0/e/f/d/f/2/17/1000-667-max.jpg','351f42173986513e412dbcc450bd4b19',811,'1000-667-max.jpg',12,10,53672,1696698525,1696698525,0,0,'',27,'');
 
 INSERT INTO `oc_group_folders` VALUES
 (1,'family folder',-3,0);
