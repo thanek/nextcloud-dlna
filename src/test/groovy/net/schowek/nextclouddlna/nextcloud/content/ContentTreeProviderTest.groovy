@@ -2,18 +2,12 @@ package net.schowek.nextclouddlna.nextcloud.content
 
 import net.schowek.nextclouddlna.nextcloud.NextcloudDB
 import spock.lang.Specification
-
 import java.time.Clock
-import java.time.Instant
 import java.time.ZoneId
-import java.time.temporal.ChronoUnit
-import java.time.temporal.Temporal
-import java.time.temporal.TemporalUnit
 import java.util.function.Consumer
-
-import static java.time.Instant.*
 import static java.time.Instant.now
-import static java.time.temporal.ChronoUnit.*
+import static java.time.Instant.ofEpochSecond
+import static java.time.temporal.ChronoUnit.DAYS
 
 class ContentTreeProviderTest extends Specification {
     def nextcloudDB

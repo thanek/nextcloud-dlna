@@ -60,9 +60,13 @@ class NextcloudDB(
     }
 
     private fun asItem(f: Filecache): ContentItem {
-        val format = MediaFormat.fromMimeType(mimetypes[f.mimetype]!!)
-        val path: String = buildPath(f)
-        return ContentItem(f.id, f.parent, f.name, path, format, f.size)
+        try {
+            val format = MediaFormat.fromMimeType(mimetypes[f.mimetype]!!)
+            val path: String = buildPath(f)
+            return ContentItem(f.id, f.parent, f.name, path, format, f.size)
+        } catch (e: Exception) {
+            throw RuntimeException("Unable to create ContentItem for ${f.path}: ${e.message}")
+        }
     }
 
     private fun asNode(f: Filecache): ContentNode {
