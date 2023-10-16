@@ -4,6 +4,7 @@ import net.schowek.nextclouddlna.dlna.media.MediaServer
 import org.jupnp.support.contentdirectory.DIDLParser
 import org.jupnp.support.model.DIDLContent
 import org.jupnp.support.model.DIDLObject
+import org.jupnp.support.model.Protocol
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -21,6 +22,7 @@ import javax.xml.xpath.XPathFactory
 
 import static javax.xml.xpath.XPathConstants.NODE
 import static javax.xml.xpath.XPathConstants.NODESET
+import static org.jupnp.support.model.Protocol.HTTP_GET
 import static org.jupnp.support.model.WriteStatus.NOT_WRITABLE
 
 class UpnpControllerIntTest extends IntegrationSpecification {
@@ -130,6 +132,7 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         didl.containers.size() == 1
+        didl.items.size() == 0
         with(didl.containers[0]) {
             assert id == "0"
             assert parentID == "-1"
@@ -159,6 +162,7 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         didl.containers.size() == 3
+        didl.items.size() == 0
         didl.containers.each {
             assert it.searchable
             assert it.restricted
@@ -185,6 +189,111 @@ class UpnpControllerIntTest extends IntegrationSpecification {
             assert parentID == "584"
             assert title == "family folder"
             assert childCount == 1
+        }
+    }
+
+    def "should handle upnp browse metadata for johndoe's directory request"() {
+        given:
+        def nodeId = "2"
+        def browseFlag = "BrowseMetadata"
+
+        when:
+        def response = performContentDirectoryAction(nodeId, browseFlag)
+
+        then:
+        response.statusCode == HttpStatus.OK
+        response.headers['content-type'].find() == "text/xml;charset=utf-8"
+
+        when:
+        def didl = extractDIDLFromResponse(response)
+
+        then:
+        didl.containers.size() == 1
+        didl.items.size() == 0
+        with(didl.containers[0]) {
+            assert id == "2"
+            assert parentID == "1"
+            assert searchable
+            assert restricted
+            assert title == "johndoe"
+            assert writeStatus == NOT_WRITABLE
+            assert clazz.value == new DIDLObject.Class("object.container").value
+            assert childCount == 3
+        }
+    }
+
+    def "should handle upnp browse direct children for johndoe's directory request"() {
+        given:
+        def nodeId = "2"
+        def browseFlag = "BrowseDirectChildren"
+
+        when:
+        def response = performContentDirectoryAction(nodeId, browseFlag)
+
+        then:
+        response.statusCode == HttpStatus.OK
+        response.headers['content-type'].find() == "text/xml;charset=utf-8"
+
+        when:
+        def didl = extractDIDLFromResponse(response)
+
+        then:
+        didl.containers.size() == 1
+        didl.items.size() == 2
+
+        with(didl.containers[0]) {
+            assert id == "15"
+            assert parentID == "2"
+            assert title == "photos"
+            assert childCount == 2
+            assert searchable
+            assert restricted
+            assert writeStatus == NOT_WRITABLE
+            assert clazz.value == new DIDLObject.Class("object.container").value
+        }
+
+        with(didl.items[0]) {
+            assert it.id == "13"
+            assert it.parentID == "2"
+            assert title == "Nextcloud intro.mp4"
+            assert !restricted
+
+            with(resources[0]) {
+                assert protocolInfo.contentFormat == "video/mp4"
+                assert protocolInfo.protocol == HTTP_GET
+                assert size == 3963036
+                assert value == urlWithPort("/c/13")
+            }
+
+            with(resources[1]) { thumbnail ->
+                assert thumbnail.protocolInfo.contentFormat == "image/jpeg"
+                assert thumbnail.protocolInfo.protocol == HTTP_GET
+                assert thumbnail.protocolInfo.additionalInfo == "DLNA.ORG_PN=JPEG_TN"
+                assert thumbnail.size == 28820
+                assert thumbnail.value == urlWithPort("/c/273")
+            }
+        }
+
+        with(didl.items[1]) {
+            assert it.id == "14"
+            assert it.parentID == "2"
+            assert title == "Nextcloud.png"
+            assert !restricted
+
+            with(resources[0]) {
+                assert protocolInfo.contentFormat == "image/png"
+                assert protocolInfo.protocol == HTTP_GET
+                assert size == 50598
+                assert value == urlWithPort("/c/14")
+            }
+
+            with(resources[1]) { thumbnail ->
+                assert thumbnail.protocolInfo.contentFormat == "image/png"
+                assert thumbnail.protocolInfo.protocol == HTTP_GET
+                assert thumbnail.protocolInfo.additionalInfo == "DLNA.ORG_PN=PNG_TN"
+                assert thumbnail.size == 50545
+                assert thumbnail.value == urlWithPort("/c/164")
+            }
         }
     }
 
