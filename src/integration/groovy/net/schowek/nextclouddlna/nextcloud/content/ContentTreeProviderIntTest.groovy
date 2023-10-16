@@ -27,7 +27,7 @@ class ContentTreeProviderIntTest extends IntegrationSpecification {
         }
     }
 
-    def "should create content tree without the group folder"() {
+    def "should create content tree without the group folder when the option is disabled"() {
         given:
         appConfigRepository.deleteById(new AppConfigId("groupfolders", "enabled"))
 
