@@ -1,7 +1,10 @@
 package net.schowek.nextclouddlna.dlna
 
-
+import org.jupnp.model.message.StreamResponseMessage
+import org.jupnp.model.message.UpnpHeaders
 import org.jupnp.model.message.UpnpRequest
+import org.jupnp.model.message.UpnpResponse
+import org.springframework.http.HttpStatus
 import org.springframework.mock.web.MockHttpServletRequest
 import spock.lang.Specification
 
@@ -59,5 +62,35 @@ class StreamMessageMapperTest extends Specification {
         "foo"  | _
     }
 
+    def "should map streamResponseMessage to ResponseEntity"() {
+        given:
+        def content = "some content"
+        def headers = [
+                "foo": ["bar"],
+                "baz": ["blah"]
+        ]
+
+        def response = new StreamResponseMessage(new UpnpResponse(responseStatus, "OK"))
+        response.headers = new UpnpHeaders(headers)
+        response.body = content
+
+        when:
+        def result = sut.map(response)
+
+        then:
+        result.statusCode == expectedHttpStatus
+        result.body == content
+        result.headers.each {
+            assert headers.keySet().contains(it.key.toLowerCase())
+            assert headers[it.key.toLowerCase()] == it.value
+        }
+
+        where:
+        responseStatus || expectedHttpStatus
+        200            || HttpStatus.OK
+        404            || HttpStatus.NOT_FOUND
+        500            || HttpStatus.INTERNAL_SERVER_ERROR
+        400            || HttpStatus.BAD_REQUEST
+    }
 
 }
