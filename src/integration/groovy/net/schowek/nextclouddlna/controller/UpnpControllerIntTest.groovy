@@ -1,31 +1,15 @@
 package net.schowek.nextclouddlna.controller
 
 import net.schowek.nextclouddlna.dlna.media.MediaServer
-import org.jupnp.support.contentdirectory.DIDLParser
-import org.jupnp.support.model.DIDLContent
 import org.jupnp.support.model.DIDLObject
-import org.jupnp.support.model.Protocol
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.w3c.dom.Document
-import org.w3c.dom.Node
-import org.w3c.dom.NodeList
-import org.xml.sax.InputSource
-import support.IntegrationSpecification
+import support.UpnpAwareSpecification
 
-import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.xpath.XPath
-import javax.xml.xpath.XPathFactory
-
-import static javax.xml.xpath.XPathConstants.NODE
-import static javax.xml.xpath.XPathConstants.NODESET
 import static org.jupnp.support.model.Protocol.HTTP_GET
 import static org.jupnp.support.model.WriteStatus.NOT_WRITABLE
 
-class UpnpControllerIntTest extends IntegrationSpecification {
+class UpnpControllerIntTest extends UpnpAwareSpecification {
 
     @Autowired
     private MediaServer mediaServer
@@ -53,14 +37,10 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         response.statusCode == HttpStatus.OK
-        with(response.headers.each { it.key.toLowerCase() }) {
-            assert it['content-type'] == ['text/xml']
-        }
+        response.headers['content-type'] == ['text/xml']
 
         when:
-        Document dom = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(
-                new InputSource(new StringReader(response.body))
-        );
+        def dom = createDocument(response)
 
         then:
         nodeValue(dom, "/root/device/friendlyName") == "nextcloud-dlna-int-test"
@@ -74,14 +54,10 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         response.statusCode == HttpStatus.OK
-        with(response.headers.each { it.key.toLowerCase() }) {
-            assert it['content-type'] == ['text/xml']
-        }
+        response.headers['content-type'] == ['text/xml']
 
         when:
-        Document dom = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(
-                new InputSource(new StringReader(response.body))
-        );
+        def dom = createDocument(response)
 
         then:
         with(node(dom, "/scpd/serviceStateTable/stateVariable[name='A_ARG_TYPE_BrowseFlag']/allowedValueList").childNodes) {
@@ -97,17 +73,13 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         response.statusCode == HttpStatus.OK
-        with(response.headers.each { it.key.toLowerCase() }) {
-            assert it['content-type'] == ['text/xml']
-        }
+        response.headers['content-type'] == ['text/xml']
 
         when:
-        Document dom = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(
-                new InputSource(new StringReader(response.body))
-        );
+        def dom = createDocument(response)
 
         then:
-        with(nodeList(dom, "/scpd/actionList/action/name")) {
+        with(nodesList(dom, "/scpd/actionList/action/name")) {
             assert it.length == 3
             it.item(0).textContent == "GetCurrentConnectionIDs"
             it.item(1).textContent == "GetProtocolInfo"
@@ -125,14 +97,13 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         response.statusCode == HttpStatus.OK
-        response.headers['content-type'].find() == "text/xml;charset=utf-8"
+        response.headers['content-type'] == ['text/xml;charset=utf-8']
 
         when:
         def didl = extractDIDLFromResponse(response)
 
         then:
         didl.containers.size() == 1
-        didl.items.size() == 0
         with(didl.containers[0]) {
             assert id == "0"
             assert parentID == "-1"
@@ -143,6 +114,7 @@ class UpnpControllerIntTest extends IntegrationSpecification {
             assert clazz.value == new DIDLObject.Class("object.container").value
             assert childCount == 3 // johndoe, janedoe, family folder
         }
+        didl.items.size() == 0
     }
 
     def "should handle upnp browse direct children for ROOT request"() {
@@ -155,14 +127,13 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         response.statusCode == HttpStatus.OK
-        response.headers['content-type'].find() == "text/xml;charset=utf-8"
+        response.headers['content-type'] == ['text/xml;charset=utf-8']
 
         when:
         def didl = extractDIDLFromResponse(response)
 
         then:
         didl.containers.size() == 3
-        didl.items.size() == 0
         didl.containers.each {
             assert it.searchable
             assert it.restricted
@@ -190,6 +161,8 @@ class UpnpControllerIntTest extends IntegrationSpecification {
             assert title == "family folder"
             assert childCount == 1
         }
+
+        didl.items.size() == 0
     }
 
     def "should handle upnp browse metadata for johndoe's directory request"() {
@@ -202,14 +175,13 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         response.statusCode == HttpStatus.OK
-        response.headers['content-type'].find() == "text/xml;charset=utf-8"
+        response.headers['content-type'] == ['text/xml;charset=utf-8']
 
         when:
         def didl = extractDIDLFromResponse(response)
 
         then:
         didl.containers.size() == 1
-        didl.items.size() == 0
         with(didl.containers[0]) {
             assert id == "2"
             assert parentID == "1"
@@ -220,6 +192,7 @@ class UpnpControllerIntTest extends IntegrationSpecification {
             assert clazz.value == new DIDLObject.Class("object.container").value
             assert childCount == 3
         }
+        didl.items.size() == 0
     }
 
     def "should handle upnp browse direct children for johndoe's directory request"() {
@@ -232,15 +205,13 @@ class UpnpControllerIntTest extends IntegrationSpecification {
 
         then:
         response.statusCode == HttpStatus.OK
-        response.headers['content-type'].find() == "text/xml;charset=utf-8"
+        response.headers['content-type'] == ['text/xml;charset=utf-8']
 
         when:
         def didl = extractDIDLFromResponse(response)
 
         then:
         didl.containers.size() == 1
-        didl.items.size() == 2
-
         with(didl.containers[0]) {
             assert id == "15"
             assert parentID == "2"
@@ -252,6 +223,7 @@ class UpnpControllerIntTest extends IntegrationSpecification {
             assert clazz.value == new DIDLObject.Class("object.container").value
         }
 
+        didl.items.size() == 2
         with(didl.items[0]) {
             assert it.id == "13"
             assert it.parentID == "2"
@@ -295,49 +267,5 @@ class UpnpControllerIntTest extends IntegrationSpecification {
                 assert thumbnail.value == urlWithPort("/c/164")
             }
         }
-    }
-
-    private String nodeValue(Document dom, String pattern) {
-        return node(dom, "$pattern/text()").nodeValue
-    }
-
-    private Node node(Document dom, String pattern) {
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        return (xpath.evaluate(pattern, dom, NODE) as Node)
-    }
-
-    private NodeList nodeList(Document dom, String pattern) {
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        return (xpath.evaluate(pattern, dom, NODESET) as NodeList)
-    }
-
-    private ResponseEntity performContentDirectoryAction(String nodeId, String browseFlag) {
-        def requestBody = '<?xml version="1.0" encoding="utf-8"?>\n' +
-                '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"\n' +
-                '            s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">\n' +
-                '    <s:Body>\n' +
-                '        <u:Browse xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1">\n' +
-                '            <ObjectID>' + nodeId + '</ObjectID>\n' +
-                '            <BrowseFlag>' + browseFlag + '</BrowseFlag>\n' +
-                '            <Filter>*</Filter>\n' +
-                '            <StartingIndex>0</StartingIndex>\n' +
-                '            <RequestedCount>200</RequestedCount>\n' +
-                '            <SortCriteria></SortCriteria>\n' +
-                '        </u:Browse>\n' +
-                '    </s:Body>\n' +
-                '</s:Envelope>'
-        def headers = new HttpHeaders([
-                'content-type': 'text/xml; charset="utf-8"',
-                'soapaction'  : '"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"'
-        ]);
-        HttpEntity<String> request = new HttpEntity<String>(requestBody, headers);
-        return restTemplate().postForEntity(urlWithPort("/dev/$uid/svc/upnp-org/ContentDirectory/action"), request, String)
-    }
-
-    private DIDLContent extractDIDLFromResponse(ResponseEntity<String> response) {
-        Document dom = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(
-                new InputSource(new StringReader(response.body))
-        );
-        return new DIDLParser().parse(nodeValue(dom, "/Envelope/Body/BrowseResponse/Result"))
     }
 }
