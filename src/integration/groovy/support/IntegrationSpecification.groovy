@@ -29,6 +29,10 @@ class IntegrationSpecification extends Specification {
     @Autowired
     private ServerInfoProvider serverInfoProvider
 
+    def setup() {
+        System.err.println("SETUP PARENT")
+    }
+
     protected String urlWithPort(String uri = "") {
         return "http://localhost:" + serverInfoProvider.port + uri;
     }
