@@ -7,10 +7,11 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.spring' version '1.8.22'
     id "org.jetbrains.kotlin.plugin.jpa" version '1.8.22'
     id 'groovy'
+    id 'pl.allegro.tech.build.axion-release' version '1.15.1'
 }
 
 group = 'net.schowek'
-version = '0.0.1-SNAPSHOT'
+project.version = scmVersion.version
 
 java {
     sourceCompatibility = '17'
