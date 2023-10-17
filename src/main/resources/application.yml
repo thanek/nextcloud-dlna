@@ -4,7 +4,7 @@ server:
   friendlyName: ${NEXTCLOUD_DLNA_FRIENDLY_NAME:Nextcloud-DLNA}
 
 nextcloud:
-  filesDir: ${NEXTCLOUD_DATA_DIR:/path/to/your/nextcloud/dir/ending/with/data}
+  filesDir: ${NEXTCLOUD_DATA_DIR}
 
 spring:
   datasource:
@@ -15,3 +15,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  sql:
+    init:
+      mode: never
+

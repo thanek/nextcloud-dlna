@@ -4,6 +4,7 @@ import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.NextcloudDB
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
@@ -11,23 +12,30 @@ import java.util.regex.Pattern
 
 @Component
 class ContentTreeProvider(
-    private val nextcloudDB: NextcloudDB
+    private val nextcloudDB: NextcloudDB,
+    private val clock: Clock
 ) {
     private var tree = buildContentTree()
-    private var lastMTime = 0L
+    var lastMTime = 0L
 
     @Scheduled(fixedDelay = REBUILD_TREE_DELAY_IN_MS, initialDelay = REBUILD_TREE_INIT_DELAY_IN_MS)
-    final fun rebuildTree() {
-        val maxMtime: Long = nextcloudDB.maxMtime()
-        val now = Instant.now().epochSecond
-        if (lastMTime < maxMtime || lastMTime + MAX_REBUILD_OFFSET_IN_S > now) {
-            logger.info("ContentTree seems to be outdated - Loading...")
-            this.tree = buildContentTree()
-            lastMTime = maxMtime
-        }
+    final fun rebuildTree(): Boolean {
+        return rebuildTree(false)
     }
 
-    private fun buildContentTree(): ContentTree {
+    final fun rebuildTree(force: Boolean): Boolean {
+        val maxMtime: Long = nextcloudDB.maxMtime()
+        val now = Instant.now(clock).epochSecond
+        val rebuild = force || lastMTime < maxMtime || lastMTime + MAX_REBUILD_OFFSET_IN_S < now
+        if (rebuild) {
+            logger.info("ContentTree seems to be outdated - Loading...")
+            this.tree = buildContentTree()
+            lastMTime = Instant.now().epochSecond
+        }
+        return rebuild
+    }
+
+    private final fun buildContentTree(): ContentTree {
         val tree = ContentTree()
         val root = ContentNode(0, -1, "ROOT")
         tree.addNode(root)

@@ -3,15 +3,23 @@ package net.schowek.nextclouddlna.util
 import jakarta.annotation.PostConstruct
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import java.net.*
 import java.util.*
 
+interface ServerInfoProvider {
+    val host: String
+    val port: Int
+}
+
 @Component
-class ServerInfoProvider(
-    @param:Value("\${server.port}") val port: Int,
+@Profile("!integration")
+class ServerInfoProviderImpl(
+    @param:Value("\${server.port}") override val port: Int,
     @param:Value("\${server.interface}") private val networkInterface: String
-) {
+) : ServerInfoProvider {
+    override val host: String get() = address!!.hostAddress
     var address: InetAddress? = null
 
     @PostConstruct
@@ -22,9 +30,11 @@ class ServerInfoProvider(
 
     private fun guessInetAddress(): InetAddress {
         return try {
-            val en0 = NetworkInterface.getByName(networkInterface).inetAddresses
-            while (en0.hasMoreElements()) {
-                val x = en0.nextElement()
+            val iface = NetworkInterface.getByName(networkInterface)
+                ?: throw RuntimeException("Could not find network interface $networkInterface")
+            val addresses = iface.inetAddresses
+            while (addresses.hasMoreElements()) {
+                val x = addresses.nextElement()
                 if (x is Inet4Address) {
                     return x
                 }

@@ -35,16 +35,21 @@ class ContentController(
     ): ResponseEntity<FileSystemResource> {
         return contentTreeProvider.getItem(id)?.let { item ->
             if (!request.getHeaders("range").hasMoreElements()) {
-                logger.info("Serving content {} {}", request.method, id)
+                logger.info("Serving content ${request.method} $id")
             }
             val fileSystemResource = FileSystemResource(item.path)
-            response.addHeader("Content-Type", item.format.mime)
-            response.addHeader("contentFeatures.dlna.org", makeProtocolInfo(item.format).toString())
-            response.addHeader("transferMode.dlna.org", "Streaming")
-            response.addHeader("realTimeInfo.dlna.org", "DLNA.ORG_TLAG=*")
-            ResponseEntity(fileSystemResource, HttpStatus.OK)
+            if (!fileSystemResource.exists()) {
+                logger.info("Could not find file ${fileSystemResource.path} for item id: $id")
+                ResponseEntity(HttpStatus.NOT_FOUND)
+            } else {
+                response.addHeader("Content-Type", item.format.mime)
+                response.addHeader("contentFeatures.dlna.org", makeProtocolInfo(item.format).toString())
+                response.addHeader("transferMode.dlna.org", "Streaming")
+                response.addHeader("realTimeInfo.dlna.org", "DLNA.ORG_TLAG=*")
+                ResponseEntity(fileSystemResource, HttpStatus.OK)
+            }
         } ?: let {
-            logger.info("Could not find item id: {}", id)
+            logger.info("Could not find item id: $id")
             ResponseEntity(HttpStatus.NOT_FOUND)
         }
     }

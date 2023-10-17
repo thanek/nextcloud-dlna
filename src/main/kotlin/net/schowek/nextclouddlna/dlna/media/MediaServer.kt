@@ -28,13 +28,15 @@ class MediaServer(
         createDeviceIcon(),
         arrayOf(contentDirectoryService, connectionManagerService)
     )
+    val serviceIdentifier: String get() = device.identity.udn.identifierString
 
     init {
         logger.info("uniqueSystemIdentifier: {} ({})", device.identity.udn, friendlyName)
     }
 
+
     companion object : KLogging() {
-        const val ICON_FILENAME = "icon.png"
+        private const val ICON_FILENAME = "icon.png"
         private const val DEVICE_TYPE = "MediaServer"
         private const val VERSION = 1
         private const val ADVERTISEMENT_AGE_IN_S = 60
