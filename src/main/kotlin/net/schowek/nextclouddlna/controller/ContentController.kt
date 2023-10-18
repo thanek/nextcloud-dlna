@@ -57,7 +57,7 @@ class ContentController(
     @RequestMapping(method = [RequestMethod.GET], value = ["/rebuild"])
     @ResponseBody
     fun reloadTree(): ResponseEntity<*> {
-        contentTreeProvider.rebuildTree()
+        contentTreeProvider.rebuildTree(true)
         return ResponseEntity<Any>(HttpStatus.OK)
     }
 

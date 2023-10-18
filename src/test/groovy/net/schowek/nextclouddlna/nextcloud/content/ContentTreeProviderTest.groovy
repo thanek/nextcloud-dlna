@@ -24,7 +24,7 @@ class ContentTreeProviderTest extends Specification {
         def clock = Clock.fixed(now, ZoneId.systemDefault())
 
         def sut = new ContentTreeProvider(nextcloudDB, clock)
-        sut.lastMTime = lastMTime.epochSecond
+        sut.lastBuildTime = lastBuildTime.epochSecond
         nextcloudDB.maxMtime() >> maxMtime.epochSecond
 
         when:
@@ -34,7 +34,7 @@ class ContentTreeProviderTest extends Specification {
         rebuild == expectedResult
 
         where:
-        force | now                  | lastMTime         | maxMtime             || expectedResult
+        force | now                  | lastBuildTime     | maxMtime             || expectedResult
         true  | now()                | ofEpochSecond(0L) | now().minus(1, DAYS) || true
         true  | now()                | ofEpochSecond(0L) | now().plus(1, DAYS)  || true
         false | now()                | ofEpochSecond(0L) | now().minus(1, DAYS) || true

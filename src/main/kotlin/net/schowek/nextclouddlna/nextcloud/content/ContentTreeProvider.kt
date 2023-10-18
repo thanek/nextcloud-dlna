@@ -16,7 +16,7 @@ class ContentTreeProvider(
     private val clock: Clock
 ) {
     private var tree = buildContentTree()
-    var lastMTime = 0L
+    var lastBuildTime = 0L
 
     @Scheduled(fixedDelay = REBUILD_TREE_DELAY_IN_MS, initialDelay = REBUILD_TREE_INIT_DELAY_IN_MS)
     final fun rebuildTree(): Boolean {
@@ -26,13 +26,19 @@ class ContentTreeProvider(
     final fun rebuildTree(force: Boolean): Boolean {
         val maxMtime: Long = nextcloudDB.maxMtime()
         val now = Instant.now(clock).epochSecond
-        val rebuild = force || lastMTime < maxMtime || lastMTime + MAX_REBUILD_OFFSET_IN_S < now
-        if (rebuild) {
-            logger.info("ContentTree seems to be outdated - Loading...")
+
+        val rebuildReasons = mapOf(
+            "forced rebuild" to force,
+            "nextcloud content changed" to (lastBuildTime < maxMtime),
+            "scheduled rebuild" to (lastBuildTime + MAX_REBUILD_OFFSET_IN_S < now)
+        ).filter { it.value }
+
+        return if (rebuildReasons.any()) {
+            val reasonsList = rebuildReasons.keys.joinToString { it }
+            logger.info("Rebuilding the content tree, reason: $reasonsList...")
             this.tree = buildContentTree()
-            lastMTime = Instant.now().epochSecond
-        }
-        return rebuild
+            true
+        } else false
     }
 
     private final fun buildContentTree(): ContentTree {
@@ -51,6 +57,7 @@ class ContentTreeProvider(
         }
         logger.info("Found {} items in {} nodes", tree.itemsCount, tree.nodesCount)
         loadThumbnails(tree)
+        lastBuildTime = Instant.now().epochSecond
         return tree
     }
 
