@@ -1,4 +1,4 @@
-package net.schowek.nextclouddlna.dlna.transport
+package net.schowek.nextclouddlna.dlna.upnp.transport
 
 import mu.KLogging
 import org.apache.http.HttpMessage

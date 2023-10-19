@@ -1,5 +1,6 @@
-package net.schowek.nextclouddlna.util
+package support.beans.util
 
+import net.schowek.nextclouddlna.util.ServerInfoProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component

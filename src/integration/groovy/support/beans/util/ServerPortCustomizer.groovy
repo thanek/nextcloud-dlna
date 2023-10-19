@@ -1,4 +1,4 @@
-package net.schowek.nextclouddlna.util
+package support.beans.util
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.web.server.ConfigurableWebServerFactory

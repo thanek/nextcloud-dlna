@@ -1,4 +1,4 @@
-package net.schowek.nextclouddlna.dlna.transport
+package net.schowek.nextclouddlna.dlna.upnp.transport
 
 import org.jupnp.transport.spi.AbstractStreamClientConfiguration
 import java.util.concurrent.ExecutorService
