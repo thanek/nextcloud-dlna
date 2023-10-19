@@ -32,12 +32,12 @@ class MyUpnpServiceConfiguration(
     }
 
     override fun createNetworkAddressFactory(streamListenPort: Int, multicastResponsePort: Int) =
-        MyNetworkAddressFactory(serverInfoProvider, multicastResponsePort)
+        MyNetworkAddressFactory(streamListenPort, multicastResponsePort)
 
     inner class MyNetworkAddressFactory(
-        private val serverInfoProvider: ServerInfoProvider,
+        streamListenPort: Int,
         multicastResponsePort: Int
-    ) : NetworkAddressFactoryImpl(serverInfoProvider.port, multicastResponsePort) {
+    ) : NetworkAddressFactoryImpl(streamListenPort, multicastResponsePort) {
         override fun isUsableAddress(iface: NetworkInterface, address: InetAddress) =
             addressesToBind.contains(address.hostAddress)
     }

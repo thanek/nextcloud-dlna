@@ -1,6 +1,6 @@
 package net.schowek.nextclouddlna.nextcloud.content
 
-import net.schowek.nextclouddlna.nextcloud.NextcloudDB
+import net.schowek.nextclouddlna.nextcloud.db.NextcloudDB
 import spock.lang.Specification
 import java.time.Clock
 import java.time.ZoneId

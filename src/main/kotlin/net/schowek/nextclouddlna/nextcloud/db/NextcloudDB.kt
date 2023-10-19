@@ -1,4 +1,4 @@
-package net.schowek.nextclouddlna.nextcloud
+package net.schowek.nextclouddlna.nextcloud.db
 
 import jakarta.annotation.PostConstruct
 import mu.KLogging
@@ -6,7 +6,6 @@ import net.schowek.nextclouddlna.nextcloud.config.NextcloudConfigDiscovery
 import net.schowek.nextclouddlna.nextcloud.content.ContentItem
 import net.schowek.nextclouddlna.nextcloud.content.ContentNode
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
-import net.schowek.nextclouddlna.nextcloud.db.*
 import net.schowek.nextclouddlna.nextcloud.db.Filecache.Companion.FOLDER_MIME_TYPE
 import org.springframework.dao.InvalidDataAccessResourceUsageException
 import org.springframework.stereotype.Component

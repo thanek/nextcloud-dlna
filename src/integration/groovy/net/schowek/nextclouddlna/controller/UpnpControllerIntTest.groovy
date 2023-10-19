@@ -1,7 +1,7 @@
 package net.schowek.nextclouddlna.controller
 
-
-import net.schowek.nextclouddlna.dlna.media.MediaServer
+import net.schowek.nextclouddlna.dlna.DlnaService
+import net.schowek.nextclouddlna.dlna.MediaServer
 import org.jupnp.support.model.DIDLObject
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -14,11 +14,14 @@ class UpnpControllerIntTest extends UpnpAwareSpecification {
 
     @Autowired
     private MediaServer mediaServer
+    @Autowired
+    private DlnaService dlnaService
 
     def uid
 
     def setup() {
         uid = mediaServer.serviceIdentifier
+        dlnaService.start()
     }
 
     def "should serve icon"() {

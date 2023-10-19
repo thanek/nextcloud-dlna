@@ -1,8 +1,7 @@
-package net.schowek.nextclouddlna
+package net.schowek.nextclouddlna.dlna
 
 import jakarta.annotation.PreDestroy
 import mu.KLogging
-import net.schowek.nextclouddlna.dlna.media.MediaServer
 import org.jupnp.UpnpService
 import org.jupnp.model.message.StreamRequestMessage
 import org.jupnp.model.message.StreamResponseMessage
@@ -22,7 +21,7 @@ class DlnaService(
         upnpService.registry.addDevice(mediaServer.device)
     }
 
-    @EventListener
+    @EventListener(condition = "!@environment.acceptsProfiles('integration')")
     fun handleContextRefresh(event: ContextRefreshedEvent) {
         start()
     }
