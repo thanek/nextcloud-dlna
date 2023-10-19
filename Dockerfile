@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk-focal
+FROM eclipse-temurin:17-jdk
 WORKDIR /app
 
 COPY ./build/libs/* ./nextcloud-dlna.jar
