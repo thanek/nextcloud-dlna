@@ -1,7 +1,7 @@
-FROM eclipse-temurin:17-jdk-focal
+FROM eclipse-temurin:17-jdk
 WORKDIR /app
 
-COPY ./build/libs/* ./app.jar
+COPY ./build/libs/* ./nextcloud-dlna.jar
 
 EXPOSE 8080
-CMD ["java","-jar","app.jar"]
+CMD ["java","-jar","nextcloud-dlna.jar"]
