@@ -8,6 +8,7 @@ import org.jupnp.model.message.header.STAllHeader
 import org.jupnp.model.message.header.UpnpHeader
 import org.jupnp.model.types.HostPort
 import org.springframework.beans.factory.annotation.Autowired
+import spock.util.concurrent.PollingConditions
 import support.IntegrationSpecification
 import support.beans.dlna.upnp.UpnpServiceConfigurationInt
 
@@ -23,6 +24,7 @@ class DlnaServiceIntTest extends IntegrationSpecification {
     private UpnpService upnpService
     @Autowired
     private MediaServer mediaServer
+    def conditions = new PollingConditions(timeout: 1)
 
     def "should send initial multicast Upnp datagrams on start"() {
         given:
@@ -36,16 +38,18 @@ class DlnaServiceIntTest extends IntegrationSpecification {
         sut.start()
 
         then:
-        configuration.outgoingDatagramMessages.any()
-        configuration.outgoingDatagramMessages[0].class == OutgoingSearchRequest
-        with(configuration.outgoingDatagramMessages[0] as OutgoingSearchRequest) {
-            assert it.operation.method == MSEARCH
-            assert it.destinationAddress == InetAddress.getByName(IPV4_UPNP_MULTICAST_GROUP)
-            assert it.destinationPort == UPNP_MULTICAST_PORT
+        conditions.eventually {
+            assert configuration.outgoingDatagramMessages.any()
+            assert configuration.outgoingDatagramMessages[0].class == OutgoingSearchRequest
+            with(configuration.outgoingDatagramMessages[0] as OutgoingSearchRequest) {
+                assert it.operation.method == MSEARCH
+                assert it.destinationAddress == InetAddress.getByName(IPV4_UPNP_MULTICAST_GROUP)
+                assert it.destinationPort == UPNP_MULTICAST_PORT
 
-            assert header(it, MAN, MANHeader.class) == DISCOVER.headerString
-            assert header(it, ST, STAllHeader.class).headerString == ALL.headerString
-            assert header(it, HOST, HostHeader.class) == new HostPort(IPV4_UPNP_MULTICAST_GROUP, UPNP_MULTICAST_PORT)
+                assert header(it, MAN, MANHeader.class) == DISCOVER.headerString
+                assert header(it, ST, STAllHeader.class).headerString == ALL.headerString
+                assert header(it, HOST, HostHeader.class) == new HostPort(IPV4_UPNP_MULTICAST_GROUP, UPNP_MULTICAST_PORT)
+            }
         }
     }
 
