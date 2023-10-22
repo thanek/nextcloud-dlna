@@ -2,9 +2,9 @@ package net.schowek.nextclouddlna.controller
 
 import jakarta.servlet.http.HttpServletRequest
 import mu.KLogging
-import net.schowek.nextclouddlna.DlnaService
+import net.schowek.nextclouddlna.dlna.DlnaService
 import net.schowek.nextclouddlna.dlna.StreamMessageMapper
-import net.schowek.nextclouddlna.dlna.media.MediaServer
+import net.schowek.nextclouddlna.dlna.MediaServer
 import org.springframework.core.io.InputStreamResource
 import org.springframework.core.io.Resource
 import org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE

@@ -1,0 +1,84 @@
+version: '2'
+
+volumes:
+  app:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/app
+  app_etc:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/etc/apache2
+  db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/db
+  db_etc:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/etc/mysql
+
+services:
+  db:
+    image: mariadb:10.5
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - db_data:/var/lib/mysql
+      - db_etc:/etc/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=sql
+      - MYSQL_PASSWORD=secret
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+
+  redis:
+    image: redis
+    restart: always
+
+  app:
+    image: nextcloud
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    links:
+      - db
+      - redis
+    volumes:
+      - app:/var/www/html
+      - app_etc:/etc/apache2
+    environment:
+      - PHP_MEMORY_LIMIT=1G
+      - PHP_UPLOAD_LIMIT=4G
+      - MYSQL_PASSWORD=secret
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=db
+
+  dlna:
+    image: thanek/nextcloud-dlna
+    restart: always
+    volumes:
+      - app:/nextcloud
+    network_mode: "host"
+    ports:
+      - "9999:9999"
+    environment:
+      - NEXTCLOUD_DLNA_SERVER_PORT=9999
+      - NEXTCLOUD_DLNA_FRIENDLY_NAME=Nextcloud
+      - NEXTCLOUD_DATA_DIR=/nextcloud/data
+      - NEXTCLOUD_DB_TYPE=mariadb
+      - NEXTCLOUD_DB_HOST=localhost
+      - NEXTCLOUD_DB_PASS=secret
+

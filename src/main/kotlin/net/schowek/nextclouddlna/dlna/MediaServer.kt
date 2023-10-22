@@ -1,4 +1,4 @@
-package net.schowek.nextclouddlna.dlna.media
+package net.schowek.nextclouddlna.dlna
 
 import mu.KLogging
 import net.schowek.nextclouddlna.util.ExternalUrls

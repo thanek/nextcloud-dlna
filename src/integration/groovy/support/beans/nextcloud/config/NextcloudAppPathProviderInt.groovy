@@ -1,6 +1,6 @@
-package net.schowek.nextclouddlna.nextcloud.config
+package support.beans.nextcloud.config
 
-
+import net.schowek.nextclouddlna.nextcloud.config.NextcloudAppPathProvider
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 

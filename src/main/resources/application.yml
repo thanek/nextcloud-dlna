@@ -5,13 +5,15 @@ server:
 
 nextcloud:
   filesDir: ${NEXTCLOUD_DATA_DIR}
+  db:
+    type: ${NEXTCLOUD_DB_TYPE:mariadb}
+    host: ${NEXTCLOUD_DB_HOST:localhost}
+    port: ${NEXTCLOUD_DB_PORT:3306}
+    name: ${NEXTCLOUD_DB_NAME:nextcloud}
+    user: ${NEXTCLOUD_DB_USER:nextcloud}
+    pass: ${NEXTCLOUD_DB_PASS:nextcloud}
 
 spring:
-  datasource:
-    url: "jdbc:mariadb://${NEXTCLOUD_DB_HOST:localhost}:${NEXTCLOUD_DB_PORT:3306}/${NEXTCLOUD_DB_NAME:nextcloud}"
-    username: ${NEXTCLOUD_DB_USER:nextcloud}
-    password: ${NEXTCLOUD_DB_PASS:nextcloud}
-    driver-class-name: org.mariadb.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: none
