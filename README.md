@@ -1,5 +1,7 @@
 # Nextcloud DLNA server
 
+[![Java CI with Gradle](https://github.com/thanek/nextcloud-dlna/actions/workflows/gradle.yml/badge.svg)](https://github.com/thanek/nextcloud-dlna/actions/workflows/gradle.yml)
+
 DLNA addon for your self-hosted Nextcloud app instance that allows you to stream Nextcloud users content on client
 devices in your network.
 It supports the group folders as well.
