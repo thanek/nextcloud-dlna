@@ -1,7 +1,7 @@
 package net.schowek.nextclouddlna.nextcloud.content
 
 import mu.KLogging
-import net.schowek.nextclouddlna.nextcloud.NextcloudDB
+import net.schowek.nextclouddlna.nextcloud.db.NextcloudDB
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -100,8 +100,8 @@ class ContentTreeProvider(
         }
     }
 
-    fun getItem(id: String): ContentItem? = tree.getItem(id)
-    fun getNode(id: String): ContentNode? = tree.getNode(id)
+    fun getItem(id: String) = tree.getItem(id)
+    fun getNode(id: String) = tree.getNode(id)
 
     companion object : KLogging() {
         const val REBUILD_TREE_DELAY_IN_MS = 1000 * 60L // 1m
@@ -115,13 +115,11 @@ class ContentTree {
     private val nodes: MutableMap<String, ContentNode> = HashMap()
     private val items: MutableMap<String, ContentItem> = HashMap()
 
-    fun getNode(id: String): ContentNode? {
-        return nodes[id]
-    }
+    val itemsCount get() = items.size
+    val nodesCount get() = nodes.size
 
-    fun getItem(id: String): ContentItem? {
-        return items[id]
-    }
+    fun getNode(id: String) = nodes[id]
+    fun getItem(id: String) = items[id]
 
     fun addItem(item: ContentItem) {
         items["${item.id}"] = item
@@ -130,8 +128,5 @@ class ContentTree {
     fun addNode(node: ContentNode) {
         nodes["${node.id}"] = node
     }
-
-    val itemsCount get() = items.size
-    val nodesCount get() = nodes.size
 }
 
