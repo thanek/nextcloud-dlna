@@ -11,13 +11,13 @@ You can use the docker image with nextcloud-dlna e.g.:
 
 ```bash
 docker run -d \
---name="nextcloud-dlna" \
---net=host \
--v /path/to/nextcloud/app/ending/with/data:/nextcloud \
--e NEXTCLOUD_DATA_DIR=/nextcloud \
--e NEXTCLOUD_DB_HOST='<your_nextcloud_db_host_ip_here>' \
--e NEXTCLOUD_DB_PASS='<your_nextcloud_db_pass_here>' \
-nextcloud-dlna
+ --name="nextcloud-dlna" \
+ --net=host \
+ -v /path/to/nextcloud/app/ending/with/data:/nextcloud \
+ -e NEXTCLOUD_DATA_DIR=/nextcloud \
+ -e NEXTCLOUD_DB_HOST='<your_nextcloud_db_host_ip_here>' \
+ -e NEXTCLOUD_DB_PASS='<your_nextcloud_db_pass_here>' \
+thanek/nextcloud-dlna
 ```
 
 or, if used together with the official Nextcloud docker image using the docker-composer. See the [examples](./examples) 
