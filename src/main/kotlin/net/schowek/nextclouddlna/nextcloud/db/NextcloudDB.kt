@@ -87,12 +87,14 @@ class NextcloudDB(
         children.filter { f -> f.mimetype == folderMimeType }
             .forEach { folder -> n.addNode(asNode(folder)) }
 
-        try {
-            children.filter { f -> f.mimetype != folderMimeType }
-                .forEach { file -> n.addItem(asItem(file)) }
-        } catch (e: Exception) {
-            logger.warn(e.message)
-        }
+        children.filter { f -> f.mimetype != folderMimeType }
+            .forEach { file ->
+                runCatching {
+                    n.addItem(asItem(file))
+                }.recover {
+                    logger.warn(it.message)
+                }
+            }
     }
 
     fun maxMtime(): Long = filecacheRepository.findFirstByOrderByStorageMtimeDesc().storageMtime
