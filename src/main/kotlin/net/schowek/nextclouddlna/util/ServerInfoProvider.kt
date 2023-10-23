@@ -19,27 +19,28 @@ class ServerInfoProviderImpl(
     @param:Value("\${server.port}") override val port: Int,
     @param:Value("\${server.interface}") private val networkInterface: String
 ) : ServerInfoProvider {
-    override val host: String get() = address!!.hostAddress
-    var address: InetAddress? = null
+    override val host: String get() = address.hostAddress
+    val address: InetAddress = guessInetAddress()
 
     @PostConstruct
     fun init() {
-        address = guessInetAddress()
-        logger.info("Using server address: {} and port {}", address!!.hostAddress, port)
+        logger.info("Using server address: {} and port {}", address.hostAddress, port)
     }
 
     private fun guessInetAddress(): InetAddress {
-        return try {
-            val iface = NetworkInterface.getByName(networkInterface)
-                ?: throw RuntimeException("Could not find network interface $networkInterface")
-            val addresses = iface.inetAddresses
-            while (addresses.hasMoreElements()) {
-                val x = addresses.nextElement()
-                if (x is Inet4Address) {
-                    return x
-                }
+        try {
+            return if (networkInterface.isNotEmpty()) {
+                logger.debug { "Using network interface $networkInterface" }
+                val iface = NetworkInterface.getByName(networkInterface)
+                    ?: throw RuntimeException("Could not find network interface $networkInterface")
+
+                iface.inetAddresses.toList().filterIsInstance<Inet4Address>().first()
+            } else {
+                logger.info { "No network interface given, using default local address" }
+                InetAddress.getLocalHost()
+            }.also {
+                logger.debug { "Found local address ${it.hostAddress}" }
             }
-            InetAddress.getLocalHost()
         } catch (e: UnknownHostException) {
             throw RuntimeException(e)
         } catch (e: SocketException) {
