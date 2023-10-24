@@ -23,7 +23,7 @@ INSERT INTO `oc_filecache` VALUES
 
 (584,2,'__groupfolders','29ff0edf73a32cb03e437d88fd049245',3,'__groupfolders',2,1,3012412,1696702221,1696702221,0,0,'',31,''),
 (586,2,'__groupfolders/1','e46cc72327dfc3ccaf32f0a167e6c6d1',584,'1',2,1,3012412,1696695701,1696695701,0,0,'',31,''),
-(587,2,'__groupfolders/Nextcloud community.jpg','b9b3caef83a2a1c20354b98df6bcd9d0',586,'Nextcloud community.jpg',12,10,797325,1695737657,1695737657,0,0,
+(587,2,'__groupfolders/1/Nextcloud community.jpg','b9b3caef83a2a1c20354b98df6bcd9d0',586,'Nextcloud community.jpg',12,10,797325,1695737657,1695737657,0,0,
 '',27,''),
 
 (4,2,'appdata_integration','bed7fa8a60170b5d88c9da5e69eaeb5a',3,'appdata_integration',2,1,10274496,1695737790,1695737790,0,0,'',31,''),

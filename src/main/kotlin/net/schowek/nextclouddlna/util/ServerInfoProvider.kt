@@ -1,6 +1,5 @@
 package net.schowek.nextclouddlna.util
 
-import jakarta.annotation.PostConstruct
 import mu.KLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Profile
