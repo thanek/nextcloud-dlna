@@ -20,14 +20,13 @@ class ServerInfoProviderImpl(
     @param:Value("\${server.interface}") private val networkInterface: String
 ) : ServerInfoProvider {
     override val host: String get() = address.hostAddress
-    val address: InetAddress = guessInetAddress()
+    private val address: InetAddress = getInetAddress()
 
-    @PostConstruct
-    fun init() {
-        logger.info("Using server address: {} and port {}", address.hostAddress, port)
+    init {
+        logger.info("Using server address: ${address.hostAddress} and port $port")
     }
 
-    private fun guessInetAddress(): InetAddress {
+    private fun getInetAddress(): InetAddress {
         try {
             return if (networkInterface.isNotEmpty()) {
                 logger.debug { "Using network interface $networkInterface" }
@@ -36,8 +35,8 @@ class ServerInfoProviderImpl(
 
                 iface.inetAddresses.toList().filterIsInstance<Inet4Address>().first()
             } else {
-                logger.info { "No network interface given, using default local address" }
-                InetAddress.getLocalHost()
+                logger.info { "No network interface name given, trying to use default local address" }
+                guessLocalAddress()
             }.also {
                 logger.debug { "Found local address ${it.hostAddress}" }
             }
@@ -46,6 +45,16 @@ class ServerInfoProviderImpl(
         } catch (e: SocketException) {
             throw RuntimeException(e)
         }
+    }
+
+    private fun guessLocalAddress() = try {
+        DatagramSocket().use { s ->
+            s.connect(InetAddress.getByAddress(byteArrayOf(1, 1, 1, 1)), 80)
+            s.localAddress
+        }
+    } catch (e: Exception) {
+        logger.warn { e.message }
+        InetAddress.getLocalHost()
     }
 
     companion object : KLogging()
