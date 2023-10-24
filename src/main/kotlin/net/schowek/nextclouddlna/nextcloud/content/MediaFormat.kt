@@ -50,10 +50,8 @@ enum class MediaFormat(
     }
 
     companion object {
-        val EXT_TO_FORMAT: Map<String, MediaFormat> = values().associateBy { it.ext }
-
         fun fromMimeType(mimetype: String): MediaFormat {
-            return stream(values()).filter { i -> i.mime.equals(mimetype) }
+            return stream(values()).filter { i -> i.mime == mimetype }
                 .findFirst()
                 .orElseThrow { RuntimeException("Unknown mime type $mimetype") }
         }
