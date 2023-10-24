@@ -47,6 +47,9 @@ class ServerInfoProviderImpl(
         }
     }
 
+    // perform fake request to 1.1.1.1:80 just to get the localAddress
+    // with use of the default routing.
+    // if it fails, we use the localAddress() which can be wrong
     private fun guessLocalAddress() = try {
         DatagramSocket().use { s ->
             s.connect(InetAddress.getByAddress(byteArrayOf(1, 1, 1, 1)), 80)
