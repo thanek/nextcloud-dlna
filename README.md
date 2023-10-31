@@ -57,7 +57,7 @@ Available env variables with their default values that you can overwrite:
 | NEXTCLOUD_DLNA_INTERFACE     |                | (optional) interface the server will be listening on<br/>if not given, the default local address will be used |
 | NEXTCLOUD_DLNA_FRIENDLY_NAME | Nextcloud-DLNA | friendly name of the DLNA service                                                                             |
 | NEXTCLOUD_DATA_DIR           |                | nextcloud installation directory (that ends with /data)                                                       |
-| NEXTCLOUD_DB_TYPE            | mariadb        | nextcloud database type (mysql, mariadb, postgresql)                                                          |
+| NEXTCLOUD_DB_TYPE            | mariadb        | nextcloud database type (mysql, mariadb, postgres)                                                            |
 | NEXTCLOUD_DB_HOST            | localhost      | nextcloud database host                                                                                       |
 | NEXTCLOUD_DB_PORT            | 3306           | nextcloud database port                                                                                       |
 | NEXTCLOUD_DB_NAME            | nextcloud      | nextcloud database name                                                                                       |
