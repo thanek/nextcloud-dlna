@@ -91,3 +91,8 @@ tasks.register('integrationTest', Test) {
 
 check.dependsOn integrationTest
 
+processResources {
+    filesMatching('**/application.yml') {
+        expand(project.properties)
+    }
+}
