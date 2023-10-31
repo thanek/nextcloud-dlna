@@ -12,7 +12,7 @@ RUN set -ex; \
     ; \
     rm -rf /var/lib/apt/lists/*;
 
-COPY --chmod=775 start.sh /start.sh
+COPY --chmod=775 ./docker/start.sh /start.sh
 
 EXPOSE 8080
 ENTRYPOINT ["/start.sh"]
