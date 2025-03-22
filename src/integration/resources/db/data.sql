@@ -81,4 +81,5 @@ INSERT INTO `oc_mounts` VALUES
 (1,1,1,'johndoe','/johndoe/',NULL,'OC\\Files\\Mount\\LocalHomeMountProvider'),
 (2,3,384,'janedoe','/janedoe/',NULL,'OC\\Files\\Mount\\LocalHomeMountProvider'),
 (3,2,586,'johndoe','/johndoe/files/family folder/',NULL,'OCA\\GroupFolders\\Mount\\MountProvider'),
-(4,2,586,'janedoe','/janedoe/files/family folder/',NULL,'OCA\\GroupFolders\\Mount\\MountProvider');
+(4,2,586,'janedoe','/janedoe/files/family folder/',NULL,'OCA\\GroupFolders\\Mount\\MountProvider'),
+(5,1,621,'johndoe','/johndoe/shared',NULL,'OCA\\Files_Sharing\\MountProvider');

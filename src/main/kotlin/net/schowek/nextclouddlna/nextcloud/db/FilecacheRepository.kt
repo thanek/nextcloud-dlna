@@ -21,7 +21,8 @@ interface FilecacheRepository : JpaRepository<Filecache, String> {
     @Query(
         "SELECT f,m FROM Filecache f, Mount m " +
                 "WHERE m.storageId = f.storage " +
-                "  AND path = 'files'"
+                "  AND f.path = 'files'" +
+                "  AND m.mountProviderClass = 'OC\\\\Files\\\\Mount\\\\LocalHomeMountProvider'"
     )
     fun mainNodes(): List<Array<Any>>
 
@@ -67,7 +68,8 @@ data class Mount(
     val id: Int,
     val storageId: Int,
     val rootId: Int,
-    val userId: String
+    val userId: String,
+    val mountProviderClass: String
 )
 
 
