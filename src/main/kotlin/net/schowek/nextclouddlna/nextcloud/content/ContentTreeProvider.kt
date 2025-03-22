@@ -45,7 +45,9 @@ class ContentTreeProvider(
         val tree = ContentTree()
         val root = ContentNode(0, -1, "ROOT")
         tree.addNode(root)
+        logger.info("Getting content from users folders...")
         nextcloudDB.mainNodes().forEach { n ->
+            logger.info(" Adding main node: ${n.name}")
             root.addNode(n)
             fillNode(n, tree)
         }

@@ -22,7 +22,7 @@ interface FilecacheRepository : JpaRepository<Filecache, String> {
         "SELECT f,m FROM Filecache f, Mount m " +
                 "WHERE m.storageId = f.storage " +
                 "  AND f.path = 'files'" +
-                "  AND m.mountProviderClass = 'OC\\\\Files\\\\Mount\\\\LocalHomeMountProvider'"
+                "  AND m.mountProviderClass = 'OC\\Files\\Mount\\LocalHomeMountProvider'"
     )
     fun mainNodes(): List<Array<Any>>
 
