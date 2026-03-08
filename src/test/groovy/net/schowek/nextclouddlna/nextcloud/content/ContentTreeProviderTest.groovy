@@ -23,7 +23,7 @@ class ContentTreeProviderTest extends Specification {
         given:
         def clock = Clock.fixed(now, ZoneId.systemDefault())
 
-        def sut = new ContentTreeProvider(nextcloudDB, clock)
+        def sut = new ContentTreeProvider(nextcloudDB, clock, ["/**"])
         sut.lastBuildTime = lastBuildTime.epochSecond
         nextcloudDB.maxMtime() >> maxMtime.epochSecond
 

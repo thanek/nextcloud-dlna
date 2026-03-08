@@ -5,6 +5,7 @@ server:
 
 nextcloud:
   filesDir: \${NEXTCLOUD_DATA_DIR}
+  scannedFolders: \${NEXTCLOUD_SCANNED_FOLDERS:/**}
   db:
     type: \${NEXTCLOUD_DB_TYPE:mariadb}
     host: \${NEXTCLOUD_DB_HOST:localhost}
@@ -22,4 +23,3 @@ spring:
   sql:
     init:
       mode: never
-

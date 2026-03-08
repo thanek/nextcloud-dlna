@@ -2,8 +2,12 @@ package net.schowek.nextclouddlna.nextcloud.content
 
 import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.db.NextcloudDB
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.nio.file.PathMatcher
 import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
@@ -13,7 +17,9 @@ import java.util.regex.Pattern
 @Component
 class ContentTreeProvider(
     private val nextcloudDB: NextcloudDB,
-    private val clock: Clock
+    private val clock: Clock,
+    @Value("\${nextcloud.scannedFolders}")
+    private val scannedFolders: List<String>
 ) {
     private var tree = buildContentTree()
     var lastBuildTime = 0L
@@ -47,20 +53,31 @@ class ContentTreeProvider(
         tree.addNode(root)
         logger.info("Getting content from users folders...")
         nextcloudDB.mainNodes().forEach { n ->
-            logger.info(" Adding main node: ${n.name}")
-            root.addNode(n)
-            fillNode(n, tree)
+            if (shouldAddNode(n, tree)) {
+                logger.info(" Adding main node: {}", n.name)
+                root.addNode(n)
+                fillNode(n, tree)
+            }
         }
         logger.info("Getting content from group folders...")
         nextcloudDB.groupFolders().forEach { n ->
-            logger.info(" Group folder found: {}", n.name)
-            root.addNode(n)
-            fillNode(n, tree)
+            if (shouldAddNode(n, tree)) {
+                logger.info(" Group folder found: {}", n.name)
+                root.addNode(n)
+                fillNode(n, tree)
+            }
         }
         logger.info("Found {} items in {} nodes", tree.itemsCount, tree.nodesCount)
         loadThumbnails(tree)
         lastBuildTime = Instant.now().epochSecond
         return tree
+    }
+
+    fun shouldAddNode(node: ContentNode, tree: ContentTree): Boolean {
+        val n = getFullName(node, tree)
+        return scannedFolders.map {
+            FileSystems.getDefault().getPathMatcher("glob:$it")
+        }.any { it.matches(Path.of(n)) }
     }
 
     private fun loadThumbnails(tree: ContentTree) {
@@ -90,16 +107,26 @@ class ContentTreeProvider(
     }
 
     private fun fillNode(node: ContentNode, tree: ContentTree) {
-        nextcloudDB.appendChildren(node)
-        tree.addNode(node)
-        node.items.forEach { item ->
-            logger.debug("Adding item[{}]: " + item.path, item.id)
-            tree.addItem(item)
+        if (shouldAddNode(node, tree)) {
+            nextcloudDB.appendChildren(node)
+            tree.addNode(node)
+            node.items.forEach { item ->
+                logger.debug("Adding item[{}]: " + item.path, item.id)
+                tree.addItem(item)
+            }
+            node.nodes.forEach { n ->
+                logger.debug("Adding node: " + n.name)
+                fillNode(n, tree)
+            }
         }
-        node.nodes.forEach { n ->
-            logger.debug("Adding node: " + n.name)
-            fillNode(n, tree)
-        }
+    }
+
+    private fun getFullName(node: ContentNode, tree: ContentTree): String {
+        val n = tree.getNode("${node.parentId}")
+        val prefix = if (n != null) {
+            getFullName(n, tree)
+        } else ""
+        return prefix + "/" + node.name
     }
 
     fun getItem(id: String) = tree.getItem(id)
@@ -129,6 +156,10 @@ class ContentTree {
 
     fun addNode(node: ContentNode) {
         nodes["${node.id}"] = node
+    }
+
+    override fun toString(): String {
+        return "NODES: ${nodes}, ITEMS: ${items}"
     }
 }
 
