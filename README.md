@@ -57,12 +57,33 @@ Available env variables with their default values that you can overwrite:
 | NEXTCLOUD_DLNA_INTERFACE     |                | (optional) interface the server will be listening on<br/>if not given, the default local address will be used |
 | NEXTCLOUD_DLNA_FRIENDLY_NAME | Nextcloud-DLNA | friendly name of the DLNA service                                                                             |
 | NEXTCLOUD_DATA_DIR           |                | nextcloud installation directory (that ends with /data)                                                       |
+| NEXTCLOUD_SCANNED_FOLDERS    | /**            | folders to be exposed by the DLNA service (use Glob Pattern to enumerate your folders)                        |
 | NEXTCLOUD_DB_TYPE            | mariadb        | nextcloud database type (mysql, mariadb, postgres)                                                            |
 | NEXTCLOUD_DB_HOST            | localhost      | nextcloud database host                                                                                       |
 | NEXTCLOUD_DB_PORT            | 3306           | nextcloud database port                                                                                       |
 | NEXTCLOUD_DB_NAME            | nextcloud      | nextcloud database name                                                                                       |
 | NEXTCLOUD_DB_USER            | nextcloud      | nextcloud database username                                                                                   |
 | NEXTCLOUD_DB_PASS            | nextcloud      | nextcloud database password                                                                                   |
+
+### Scanned Folders
+By default nextcloud-dlna scans all the folders that are available to serve, i.e. all users' folders and all global 
+folders (if the Group folders feature is enabled in the Nextcloud config). You may filter the folders to be served by 
+passing the env variable with the list of allowed folders using the Glob Pattern. In this pattern you can use the 
+placeholders (precesed by a slash):
+
+| Placeholder | Meaning                                             |
+|-------------|-----------------------------------------------------|
+| `*`         | any string in the path segment                      |
+| `**`        | any - including zero - folders or files recursively |
+| `?`         | any character                                       |
+| `{foo,bar}` | alternatives                                        |
+| `[abc]`     | one of the characters from the set                  |
+
+Examples:
+`NEXTCLOUD_SCANNED_FOLDERS="/john,/jane,/jim,/joe"` - will allow to scan only the four users' folders
+`NEXTCLOUD_SCANNED_FOLDERS="/**/music"` - will allow to scan only the `music` folder of any user
+`NEXTCLOUD_SCANNED_FOLDERS="/{jim,joe}/**/music"` - will allow to scan only the `music` folder of `jim` and `joe` users
+`NEXTCLOUD_SCANNED_FOLDERS="/**/{music,photos,movies}"` - will allow to scan only the `music`,`photos` and `movies` folders of any user
 
 ### Code used
 
