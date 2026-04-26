@@ -5,6 +5,7 @@
 DLNA addon for your self-hosted Nextcloud app instance that allows you to stream Nextcloud users content on client
 devices in your network.
 It supports the group folders as well.
+Supports client-requested sorting of browse results by title, date, and media type (`dc:title`, `dc:date`, `upnp:class`).
 
 ## Running in Docker
 
@@ -71,17 +72,17 @@ folders (if the Group folders feature is enabled in the Nextcloud config). You m
 passing the env variable with the list of allowed folders using the Glob Pattern. In this pattern you can use the 
 placeholders (precesed by a slash):
 
-| Placeholder | Meaning                                             |
-|-------------|-----------------------------------------------------|
-| `*`         | any string in the path segment                      |
-| `**`        | any - including zero - folders or files recursively |
-| `?`         | any character                                       |
-| `{foo,bar}` | alternatives                                        |
-| `[abc]`     | one of the characters from the set                  |
+| Placeholder | Meaning                                                       |
+|-------------|---------------------------------------------------------------|
+| `*`         | any string in the path segment                                |
+| `**`        | any one or more folders recursively (requires at least one segment) |
+| `?`         | any character                                                 |
+| `{foo,bar}` | alternatives                                                  |
+| `[abc]`     | one of the characters from the set                            |
 
 Examples:
 `NEXTCLOUD_SCANNED_FOLDERS="/john,/jane,/jim,/joe"` - will allow to scan only the four users' folders
-`NEXTCLOUD_SCANNED_FOLDERS="/**/music"` - will allow to scan only the `music` folder of any user
+`NEXTCLOUD_SCANNED_FOLDERS="/**/music"` - will allow to scan only the `music` folder of any user (e.g. `/john/music` or `/john/rock/music`, but not a top-level `/music`)
 `NEXTCLOUD_SCANNED_FOLDERS="/{jim,joe}/**/music"` - will allow to scan only the `music` folder of `jim` and `joe` users
 `NEXTCLOUD_SCANNED_FOLDERS="/**/{music,photos,movies}"` - will allow to scan only the `music`,`photos` and `movies` folders of any user
 

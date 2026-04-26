@@ -75,6 +75,40 @@ class NextcloudDBTest extends Specification {
         }
     }
 
+    def "should fail with descriptive error when FOLDER_MIME_TYPE is missing from database"() {
+        given: "fresh mock so setup() stub does not interfere"
+        def badMimetypeRepo = Mock(MimetypeRepository)
+        badMimetypeRepo.findAll() >> [
+                new Mimetype(1, 'text/plain'),
+                new Mimetype(2, 'video/mp4')
+                // httpd/unix-directory intentionally missing
+        ]
+
+        when:
+        new NextcloudDB(configDiscovery, badMimetypeRepo, filecacheRepository, groupFolderRepository)
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains('httpd/unix-directory')
+        e.message.contains('Nextcloud database')
+    }
+
+    def "should skip item with unknown mimetype and not throw"() {
+        given:
+        def sut = new NextcloudDB(configDiscovery, mimeTypeRepository, filecacheRepository, groupFolderRepository)
+        def parentNode = new ContentNode(1, 0, "stuff")
+        filecacheRepository.findByParent(1) >> [
+                aFilecache(10, "/stuff/unknown.xyz", 1, 99)  // mimetype id 99 not in map
+        ]
+
+        when:
+        sut.appendChildren(parentNode)
+
+        then: "item is silently skipped — no exception, no items added"
+        parentNode.items.isEmpty()
+        parentNode.nodes.isEmpty()
+    }
+
     private static def aFilecache(int id, String path, int parent, int mimeType) {
         def name = new File(path).getName()
         return new Filecache(id, thumbStorageId, path, parent, name, mimeType, 0L, 0L, 0L)

@@ -14,6 +14,7 @@ import org.jupnp.support.model.dlna.DLNAAttribute.Type.*
 import org.jupnp.support.model.dlna.DLNAConversionIndicator.NONE
 import org.jupnp.support.model.dlna.DLNAFlags.*
 import org.jupnp.support.model.dlna.DLNAOperations.*
+import org.jupnp.support.model.dlna.DLNAProfiles
 import org.jupnp.support.model.dlna.DLNAProfiles.*
 import org.springframework.core.io.FileSystemResource
 import org.springframework.http.HttpStatus
@@ -63,18 +64,46 @@ class ContentController(
 
     private fun makeProtocolInfo(mediaFormat: MediaFormat): DLNAProtocolInfo {
         val attributes = EnumMap<Type, DLNAAttribute<*>>(Type::class.java)
-        if (mediaFormat.contentGroup === VIDEO) {
-            attributes[DLNA_ORG_PN] = DLNAProfileAttribute(AVC_MP4_LPCM)
-            attributes[DLNA_ORG_OP] = DLNAOperationsAttribute(RANGE)
-            attributes[DLNA_ORG_CI] = DLNAConversionIndicatorAttribute(NONE)
-            attributes[DLNA_ORG_FLAGS] = DLNAFlagsAttribute(
-                INTERACTIVE_TRANSFERT_MODE,
-                BACKGROUND_TRANSFERT_MODE,
-                DLNA_V15,
-                STREAMING_TRANSFER_MODE
-            )
+        val streamingFlags = DLNAFlagsAttribute(
+            INTERACTIVE_TRANSFERT_MODE, BACKGROUND_TRANSFERT_MODE, DLNA_V15, STREAMING_TRANSFER_MODE
+        )
+        when (mediaFormat.contentGroup) {
+            VIDEO -> {
+                dlnaProfileForVideo(mediaFormat)?.let { attributes[DLNA_ORG_PN] = DLNAProfileAttribute(it) }
+                attributes[DLNA_ORG_OP] = DLNAOperationsAttribute(RANGE)
+                attributes[DLNA_ORG_CI] = DLNAConversionIndicatorAttribute(NONE)
+                attributes[DLNA_ORG_FLAGS] = streamingFlags
+            }
+            AUDIO -> {
+                dlnaProfileForAudio(mediaFormat)?.let { attributes[DLNA_ORG_PN] = DLNAProfileAttribute(it) }
+                attributes[DLNA_ORG_OP] = DLNAOperationsAttribute(RANGE)
+                attributes[DLNA_ORG_FLAGS] = streamingFlags
+            }
+            IMAGE -> {
+                dlnaProfileForImage(mediaFormat)?.let { attributes[DLNA_ORG_PN] = DLNAProfileAttribute(it) }
+            }
+            else -> {}
         }
         return DLNAProtocolInfo(Protocol.HTTP_GET, ProtocolInfo.WILDCARD, mediaFormat.mime, attributes)
+    }
+
+    private fun dlnaProfileForVideo(format: MediaFormat): DLNAProfiles? = when (format) {
+        MediaFormat.MP4, MediaFormat.M4V -> AVC_MP4_LPCM
+        else -> null
+    }
+
+    private fun dlnaProfileForAudio(format: MediaFormat): DLNAProfiles? = when (format) {
+        MediaFormat.MP3, MediaFormat.MPGA -> MP3
+        MediaFormat.AAC, MediaFormat.M4A -> AAC_ISO
+        MediaFormat.WMA -> WMABASE
+        MediaFormat.WAV -> LPCM
+        else -> null
+    }
+
+    private fun dlnaProfileForImage(format: MediaFormat): DLNAProfiles? = when (format) {
+        MediaFormat.JPEG, MediaFormat.JPG -> JPEG_LRG
+        MediaFormat.PNG -> PNG_LRG
+        else -> null
     }
 
     companion object : KLogging()
