@@ -23,7 +23,7 @@ class StreamMessageMapper {
         )
         if (requestMessage.operation.method == UpnpRequest.Method.UNKNOWN) {
             logger.warn("Method not supported by UPnP stack: {}", request.method)
-            throw RuntimeException("Method not supported: {}" + request.method)
+            throw RuntimeException("Method not supported: ${request.method}")
         }
 
         requestMessage.headers = upnpHeaders(request)

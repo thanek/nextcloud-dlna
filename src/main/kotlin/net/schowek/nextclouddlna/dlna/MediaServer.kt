@@ -39,7 +39,7 @@ class MediaServer(
         private const val ICON_FILENAME = "icon.png"
         private const val DEVICE_TYPE = "MediaServer"
         private const val VERSION = 1
-        private const val ADVERTISEMENT_AGE_IN_S = 60
+        private const val ADVERTISEMENT_AGE_IN_S = 1800
 
         @Throws(IOException::class)
         fun createDeviceIcon() = with(iconResource()) {

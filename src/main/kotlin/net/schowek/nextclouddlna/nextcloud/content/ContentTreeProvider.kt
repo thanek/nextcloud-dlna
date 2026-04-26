@@ -21,14 +21,24 @@ class ContentTreeProvider(
     @Value("\${nextcloud.scannedFolders}")
     private val scannedFolders: List<String>
 ) {
-    private var tree = buildContentTree()
-    var lastBuildTime = 0L
+    // Pre-compiled glob matchers for scannedFolders patterns.
+    // Paths are absolute (e.g. /john, /john/music). Supported patterns:
+    //   /**            — expose all users and their folders
+    //   /username      — expose one user's entire folder tree
+    //   /**/subfolder  — expose a named subfolder under any user (requires at least one parent segment)
+    // Note: /**/name does NOT match /name directly (JDK glob requires at least one segment before the last component).
+    private val folderMatchers: List<PathMatcher> = scannedFolders.map {
+        FileSystems.getDefault().getPathMatcher("glob:$it")
+    }
+    @Volatile private var tree = buildContentTree()
+    @Volatile var lastBuildTime = 0L
 
     @Scheduled(fixedDelay = REBUILD_TREE_DELAY_IN_MS, initialDelay = REBUILD_TREE_INIT_DELAY_IN_MS)
     final fun rebuildTree(): Boolean {
         return rebuildTree(false)
     }
 
+    @Synchronized
     final fun rebuildTree(force: Boolean): Boolean {
         val maxMtime: Long = nextcloudDB.maxMtime()
         val now = Instant.now(clock).epochSecond
@@ -75,9 +85,7 @@ class ContentTreeProvider(
 
     fun shouldAddNode(node: ContentNode, tree: ContentTree): Boolean {
         val n = getFullName(node, tree)
-        return scannedFolders.map {
-            FileSystems.getDefault().getPathMatcher("glob:$it")
-        }.any { it.matches(Path.of(n)) }
+        return folderMatchers.any { it.matches(Path.of(n)) }
     }
 
     private fun loadThumbnails(tree: ContentTree) {

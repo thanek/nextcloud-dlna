@@ -24,12 +24,11 @@ class DriverManagerDataSourceConfig {
                 }
 
                 POSTGRES -> {
-                    dataSource.setDriverClassName("org.mariadb.jdbc.Driver");
+                    dataSource.setDriverClassName("org.postgresql.Driver");
                     dataSource.url = "jdbc:postgresql://${props.host}:${props.port}/${props.name}";
                     dataSource.connectionProperties?.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect")
                 }
 
-                else -> throw RuntimeException("Unsupported DB type")
             }
             dataSource.username = props.user;
             dataSource.password = props.pass;
