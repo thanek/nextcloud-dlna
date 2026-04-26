@@ -6,7 +6,8 @@ data class ContentItem(
     val name: String,
     val path: String,
     val format: MediaFormat,
-    val fileLength: Long
+    val fileLength: Long,
+    val mtime: Long = 0L
 ) {
     var thumb: ContentItem? = null
 }

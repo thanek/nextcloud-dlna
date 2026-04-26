@@ -20,6 +20,8 @@ class ContentDirectoryServiceManager(
         return contentDirectoryService
     }
 
+    // No-op: ContentDirectoryService delegates to ContentTreeProvider,
+    // which is already thread-safe (@Volatile tree, @Synchronized rebuildTree).
     override fun lock() {}
     override fun unlock() {}
 }

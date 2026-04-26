@@ -1,6 +1,9 @@
 package net.schowek.nextclouddlna.dlna.media
 
 import mu.KLogging
+import net.schowek.nextclouddlna.nextcloud.content.ContentGroup
+import net.schowek.nextclouddlna.nextcloud.content.ContentItem
+import net.schowek.nextclouddlna.nextcloud.content.ContentNode
 import net.schowek.nextclouddlna.nextcloud.content.ContentTreeProvider
 import org.jupnp.support.contentdirectory.AbstractContentDirectoryService
 import org.jupnp.support.contentdirectory.ContentDirectoryErrorCode
@@ -25,8 +28,8 @@ class ContentDirectoryService(
     private val contentTreeProvider: ContentTreeProvider,
     private val nodeConverter: NodeConverter
 ) : AbstractContentDirectoryService(
-    mutableListOf("dc:title", "upnp:class"),  // also "dc:creator", "dc:date", "res@size"
-    mutableListOf("dc:title")
+    mutableListOf("dc:title", "upnp:class"),
+    mutableListOf("dc:title", "dc:date", "upnp:class")
 ) {
 
     /**
@@ -52,8 +55,10 @@ class ContentDirectoryService(
                     )
                     return BrowseResult(result, 1, 1)
                 }
-                val containers: List<Container> = nodeConverter.makeSubContainersWithoutTheirSubContainers(node)
-                val items: List<Item> = nodeConverter.makeItems(node)
+                val containers: List<Container> = sortNodes(node.nodes, orderby)
+                    .map { nodeConverter.makeContainerWithoutSubContainers(it) }
+                val items: List<Item> = sortItems(node.items, orderby)
+                    .map { nodeConverter.makeItem(it) }
                 return toRangedResult(containers, items, firstResult, maxResults)
             }
 
@@ -104,6 +109,41 @@ class ContentDirectoryService(
             (didl.containers.size + didl.items.size).toLong(),
             (containers.size + items.size).toLong()
         )
+    }
+
+    private fun sortNodes(nodes: List<ContentNode>, orderby: Array<SortCriterion>): List<ContentNode> {
+        var comparator: Comparator<ContentNode>? = null
+        for (criterion in orderby) {
+            val c: Comparator<ContentNode> = when (criterion.propertyName) {
+                "dc:title" -> compareBy { it.name.lowercase() }
+                else -> continue
+            }
+            val ordered = if (criterion.isAscending) c else c.reversed()
+            comparator = comparator?.thenComparing(ordered) ?: ordered
+        }
+        return comparator?.let { nodes.sortedWith(it) } ?: nodes
+    }
+
+    private fun sortItems(items: List<ContentItem>, orderby: Array<SortCriterion>): List<ContentItem> {
+        var comparator: Comparator<ContentItem>? = null
+        for (criterion in orderby) {
+            val c: Comparator<ContentItem> = when (criterion.propertyName) {
+                "dc:title" -> compareBy { it.name.lowercase() }
+                "dc:date" -> compareBy { it.mtime }
+                "upnp:class" -> compareBy { upnpClassOf(it) }
+                else -> continue
+            }
+            val ordered = if (criterion.isAscending) c else c.reversed()
+            comparator = comparator?.thenComparing(ordered) ?: ordered
+        }
+        return comparator?.let { items.sortedWith(it) } ?: items
+    }
+
+    private fun upnpClassOf(item: ContentItem): String = when (item.format.contentGroup) {
+        ContentGroup.VIDEO -> "object.item.videoItem"
+        ContentGroup.IMAGE -> "object.item.imageItem"
+        ContentGroup.AUDIO -> "object.item.audioItem"
+        else -> "object.item"
     }
 
     companion object : KLogging()

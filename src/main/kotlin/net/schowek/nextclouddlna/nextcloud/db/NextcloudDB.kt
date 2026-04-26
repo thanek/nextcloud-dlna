@@ -10,6 +10,7 @@ import net.schowek.nextclouddlna.nextcloud.db.Filecache.Companion.FOLDER_MIME_TY
 import org.springframework.dao.InvalidDataAccessResourceUsageException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 
 
@@ -22,8 +23,9 @@ class NextcloudDB(
 ) {
     private val thumbStorageId: Int = filecacheRepository.findFirstByPath(nextcloudConfig.appDataDir).storage
     private val mimetypes: Map<Int, String> = mimetypeRepository.findAll().associate { it.id to it.mimetype }
-    private val folderMimeType: Int = mimetypes.entries.find { it.value == FOLDER_MIME_TYPE }!!.key
-    private val storageUsersMap: MutableMap<Int, String> = HashMap()
+    private val folderMimeType: Int = mimetypes.entries.find { it.value == FOLDER_MIME_TYPE }?.key
+        ?: error("Mimetype '$FOLDER_MIME_TYPE' not found in Nextcloud mimetypes table. Is the Nextcloud database configured correctly?")
+    private val storageUsersMap: MutableMap<Int, String> = ConcurrentHashMap()
 
     @PostConstruct
     fun init() {
@@ -60,9 +62,10 @@ class NextcloudDB(
 
     private fun asItem(f: Filecache): ContentItem {
         try {
-            val format = MediaFormat.fromMimeType(mimetypes[f.mimetype]!!)
+            val format = MediaFormat.fromMimeType(mimetypes[f.mimetype]
+                ?: throw IllegalStateException("Unknown mimetype id: ${f.mimetype} for file: ${f.path}"))
             val path: String = buildPath(f)
-            return ContentItem(f.id, f.parent, f.name, path, format, f.size)
+            return ContentItem(f.id, f.parent, f.name, path, format, f.size, f.mtime)
         } catch (e: Exception) {
             throw RuntimeException("Unable to create ContentItem for ${f.path}: ${e.message}")
         }
