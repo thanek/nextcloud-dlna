@@ -4,7 +4,8 @@ import net.schowek.nextclouddlna.nextcloud.content.ContentItem
 import net.schowek.nextclouddlna.nextcloud.content.ContentNode
 import net.schowek.nextclouddlna.nextcloud.content.ContentTreeProvider
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
-import org.jupnp.support.model.BrowseFlag
+import org.jupnp.support.contentdirectory.DIDLParser
+import org.jupnp.support.model.BrowseResult
 import org.jupnp.support.model.DIDLObject
 import org.jupnp.support.model.Res
 import org.jupnp.support.model.SortCriterion
@@ -19,7 +20,10 @@ import static org.jupnp.support.model.BrowseFlag.METADATA
 class ContentDirectoryServiceTest extends Specification {
     def contentTreeProvider = Mock(ContentTreeProvider)
     def nodeConverter = Mock(NodeConverter)
-    def sut = new ContentDirectoryService(contentTreeProvider, nodeConverter)
+    def didlParser = Mock(DIDLParser)
+    def resultSorter = Mock(ResultSorter)
+    def browseResultBuilder = Mock(BrowseResultBuilder)
+    def sut = new ContentDirectoryService(contentTreeProvider, nodeConverter, didlParser, resultSorter, browseResultBuilder)
 
     def "browse node with DIRECT_CHILDREN returns all children"() {
         given:
@@ -37,6 +41,9 @@ class ContentDirectoryServiceTest extends Specification {
         nodeConverter.makeContainerWithoutSubContainers(child2) >> container("3", "1")
         nodeConverter.makeItem(item1) >> item("4", "1")
         nodeConverter.makeItem(item2) >> item("5", "1")
+        resultSorter.sortNodes(_, _) >> [child1, child2]
+        resultSorter.sortItems(_, _) >> [item1, item2]
+        browseResultBuilder.createBrowseResult(_, _, 0L, 0L) >> new BrowseResult("<DIDL></DIDL>", 4L, 4L)
 
         when:
         def result = sut.browse("1", DIRECT_CHILDREN, "*", 0, 0, [] as SortCriterion[])
@@ -51,6 +58,7 @@ class ContentDirectoryServiceTest extends Specification {
         def node = new ContentNode(1, 0, "Videos")
         contentTreeProvider.getNode("1") >> node
         nodeConverter.makeContainerWithoutSubContainers(node) >> container("1", "0")
+        didlParser.generate(_) >> "<DIDL></DIDL>"
 
         when:
         def result = sut.browse("1", METADATA, "*", 0, 0, [] as SortCriterion[])
@@ -64,6 +72,7 @@ class ContentDirectoryServiceTest extends Specification {
         given:
         contentTreeProvider.getNode("999") >> null
         contentTreeProvider.getItem("999") >> null
+        didlParser.generate(_) >> "<DIDL></DIDL>"
 
         when:
         def result = sut.browse("999", DIRECT_CHILDREN, "*", 0, 0, [] as SortCriterion[])
@@ -79,6 +88,7 @@ class ContentDirectoryServiceTest extends Specification {
         contentTreeProvider.getNode("4") >> null
         contentTreeProvider.getItem("4") >> contentItem
         nodeConverter.makeItem(contentItem) >> item("4", "1")
+        didlParser.generate(_) >> "<DIDL></DIDL>"
 
         when:
         def result = sut.browse("4", DIRECT_CHILDREN, "*", 0, 0, [] as SortCriterion[])
@@ -98,6 +108,9 @@ class ContentDirectoryServiceTest extends Specification {
         contentTreeProvider.getNode("1") >> node
         childNodes.each { n -> nodeConverter.makeContainerWithoutSubContainers(n) >> container("$n.id", "1") }
         childItems.each { i -> nodeConverter.makeItem(i) >> item("$i.id", "1") }
+        resultSorter.sortNodes(_, _) >> childNodes
+        resultSorter.sortItems(_, _) >> childItems
+        browseResultBuilder.createBrowseResult(_, _, firstResult, maxResults) >> new BrowseResult("<DIDL></DIDL>", expectedCount.toLong(), 5L)
 
         when:
         def result = sut.browse("1", DIRECT_CHILDREN, "*", firstResult, maxResults, [] as SortCriterion[])

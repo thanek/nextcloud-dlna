@@ -18,11 +18,19 @@ class NextcloudDBTest extends Specification {
     def mimeTypeRepository = Mock(MimetypeRepository)
     def filecacheRepository = Mock(FilecacheRepository)
     def groupFolderRepository = Mock(GroupFolderRepository)
+    def thumbnailProcessor = Mock(ThumbnailProcessor)
     def tmpDir = File.createTempDir()
+
+    def storageUserMapper = new DefaultStorageUserMapper()
+    def mimetypeResolver
+    def pathBuilder
+    def contentItemFactory
+    def sut
 
     def setup() {
         configDiscovery.getAppDataDir() >> "/tmp/app_0987654321"
         configDiscovery.getNextcloudDir() >> tmpDir
+        configDiscovery.supportsGroupFolders >> false
         filecacheRepository.findFirstByPath(configDiscovery.appDataDir)
                 >> new Filecache(999, thumbStorageId, "thumbs", 0, "thumbs", DIRECTORY, 123L, 0L, 0L)
         mimeTypeRepository.findAll() >> [
@@ -33,6 +41,15 @@ class NextcloudDBTest extends Specification {
                 new Mimetype(IMAGE_JPG, 'image/jpeg'),
                 new Mimetype(APP_PDF, 'application/pdf')
         ]
+
+        mimetypeResolver = new DefaultMimetypeResolver(mimeTypeRepository)
+        pathBuilder = new DefaultPathBuilder(configDiscovery, storageUserMapper)
+        contentItemFactory = new DefaultContentItemFactory(mimetypeResolver)
+        sut = new NextcloudDB(
+                configDiscovery, filecacheRepository, groupFolderRepository,
+                mimetypeResolver, storageUserMapper, pathBuilder,
+                contentItemFactory, thumbnailProcessor
+        )
     }
 
     def cleanup() {
@@ -53,8 +70,6 @@ class NextcloudDBTest extends Specification {
                 aFilecache(7, "/stuff/documents/resume.pdf", 6, APP_PDF)
         ]
 
-        def sut = new NextcloudDB(configDiscovery, mimeTypeRepository, filecacheRepository, groupFolderRepository)
-
         when:
         sut.appendChildren(parentNode)
 
@@ -65,6 +80,9 @@ class NextcloudDBTest extends Specification {
         parentNode.items.find { it.name == 'baz.mp3' }.format.mime == MP3.mime
         parentNode.items.find { it.name == 'blah.mp4' }.format.mime == MP4.mime
         parentNode.items.find { it.name == 'readme.md' } == null
+
+        then: "item paths are resolved against the nextcloud data dir"
+        parentNode.items.every { it.path.startsWith(tmpDir.absolutePath) }
 
         then: "appends all subnodes without their children"
         parentNode.nodes.size() == 1
@@ -85,7 +103,7 @@ class NextcloudDBTest extends Specification {
         ]
 
         when:
-        new NextcloudDB(configDiscovery, badMimetypeRepo, filecacheRepository, groupFolderRepository)
+        new DefaultMimetypeResolver(badMimetypeRepo)
 
         then:
         def e = thrown(IllegalStateException)
@@ -95,7 +113,6 @@ class NextcloudDBTest extends Specification {
 
     def "should skip item with unknown mimetype and not throw"() {
         given:
-        def sut = new NextcloudDB(configDiscovery, mimeTypeRepository, filecacheRepository, groupFolderRepository)
         def parentNode = new ContentNode(1, 0, "stuff")
         filecacheRepository.findByParent(1) >> [
                 aFilecache(10, "/stuff/unknown.xyz", 1, 99)  // mimetype id 99 not in map
@@ -107,6 +124,22 @@ class NextcloudDBTest extends Specification {
         then: "item is silently skipped — no exception, no items added"
         parentNode.items.isEmpty()
         parentNode.nodes.isEmpty()
+    }
+
+    def "mainNodes registers the storage-to-user mapping used when building paths"() {
+        given:
+        def filecache = aFilecache(20, "files/movie.mp4", 0, VIDEO_MP4)
+        filecacheRepository.mainNodes() >> [[filecache, new Mount(1, thumbStorageId, 0, "alice", "LocalHomeMountProvider")] as Object[]]
+
+        when:
+        def nodes = sut.mainNodes()
+
+        then: "node is named after the mount owner"
+        nodes.size() == 1
+        nodes[0].name == "alice"
+
+        and: "subsequent paths for that storage include the user name"
+        pathBuilder.build(filecache) == "${tmpDir.absolutePath}/alice/files/movie.mp4"
     }
 
     private static def aFilecache(int id, String path, int parent, int mimeType) {
