@@ -1,47 +1,36 @@
 package net.schowek.nextclouddlna.nextcloud.db
 
-import jakarta.annotation.PostConstruct
 import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.config.NextcloudConfigDiscovery
 import net.schowek.nextclouddlna.nextcloud.content.ContentItem
 import net.schowek.nextclouddlna.nextcloud.content.ContentNode
-import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
-import net.schowek.nextclouddlna.nextcloud.db.Filecache.Companion.FOLDER_MIME_TYPE
 import org.springframework.dao.InvalidDataAccessResourceUsageException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 
 
 @Component
 class NextcloudDB(
     private val nextcloudConfig: NextcloudConfigDiscovery,
-    private val mimetypeRepository: MimetypeRepository,
     private val filecacheRepository: FilecacheRepository,
-    private val groupFolderRepository: GroupFolderRepository
+    private val groupFolderRepository: GroupFolderRepository,
+    private val mimetypeResolver: MimetypeResolver,
+    private val storageUserMapper: StorageUserMapper,
+    private val pathBuilder: PathBuilder,
+    private val contentItemFactory: ContentItemFactory,
+    private val thumbnailProcessor: ThumbnailProcessor
 ) {
-    private val thumbStorageId: Int = filecacheRepository.findFirstByPath(nextcloudConfig.appDataDir).storage
-    private val mimetypes: Map<Int, String> = mimetypeRepository.findAll().associate { it.id to it.mimetype }
-    private val folderMimeType: Int = mimetypes.entries.find { it.value == FOLDER_MIME_TYPE }?.key
-        ?: error("Mimetype '$FOLDER_MIME_TYPE' not found in Nextcloud mimetypes table. Is the Nextcloud database configured correctly?")
-    private val storageUsersMap: MutableMap<Int, String> = ConcurrentHashMap()
-
-    @PostConstruct
-    fun init() {
-        logger.info("Using thumbnail storage id: {}", thumbStorageId)
-    }
-
     @Transactional(readOnly = true)
-    fun processThumbnails(thumbConsumer: Consumer<ContentItem>) {
-        filecacheRepository.findThumbnails("${nextcloudConfig.appDataDir}/preview/%", thumbStorageId, folderMimeType)
-            .use { files ->
-                files.map { f: Filecache -> asItem(f) }.forEach(thumbConsumer)
-            }
-    }
+    fun processThumbnails(thumbConsumer: Consumer<ContentItem>) = thumbnailProcessor.process(thumbConsumer)
 
     fun mainNodes(): List<ContentNode> =
-        filecacheRepository.mainNodes().map { o -> asNode(o[0] as Filecache, o[1] as Mount) }.toList()
+        filecacheRepository.mainNodes().map { o ->
+            val filecache = o[0] as Filecache
+            val mount = o[1] as Mount
+            storageUserMapper.map(filecache.storage, mount.userId)
+            ContentNode(filecache.id, filecache.parent, mount.userId)
+        }.toList()
 
     fun groupFolders(): List<ContentNode> {
         when {
@@ -49,7 +38,7 @@ class NextcloudDB(
                 try {
                     return groupFolderRepository.findAll().flatMap { g ->
                         filecacheRepository.findByPath("__groupfolders/" + g.id).map { f ->
-                            asNode(f, g)
+                            ContentNode(f.id, f.parent, g.name)
                         }.toList()
                     }
                 } catch (e: InvalidDataAccessResourceUsageException) {
@@ -60,40 +49,17 @@ class NextcloudDB(
         return emptyList()
     }
 
-    private fun asItem(f: Filecache): ContentItem {
-        try {
-            val format = MediaFormat.fromMimeType(mimetypes[f.mimetype]
-                ?: throw IllegalStateException("Unknown mimetype id: ${f.mimetype} for file: ${f.path}"))
-            val path: String = buildPath(f)
-            return ContentItem(f.id, f.parent, f.name, path, format, f.size, f.mtime)
-        } catch (e: Exception) {
-            throw RuntimeException("Unable to create ContentItem for ${f.path}: ${e.message}")
-        }
-    }
-
-    private fun asNode(f: Filecache): ContentNode {
-        return ContentNode(f.id, f.parent, f.name)
-    }
-
-    private fun asNode(f: Filecache, m: Mount): ContentNode {
-        storageUsersMap[f.storage] = m.userId
-        return ContentNode(f.id, f.parent, m.userId)
-    }
-
-    private fun asNode(f: Filecache, g: GroupFolder): ContentNode {
-        return ContentNode(f.id, f.parent, g.name)
-    }
-
     fun appendChildren(n: ContentNode) {
         val children = filecacheRepository.findByParent(n.id)
+        val folderMimeTypeId = mimetypeResolver.folderMimeTypeId
 
-        children.filter { f -> f.mimetype == folderMimeType }
-            .forEach { folder -> n.addNode(asNode(folder)) }
+        children.filter { f -> f.mimetype == folderMimeTypeId }
+            .forEach { folder -> n.addNode(ContentNode(folder.id, folder.parent, folder.name)) }
 
-        children.filter { f -> f.mimetype != folderMimeType }
+        children.filter { f -> f.mimetype != folderMimeTypeId }
             .forEach { file ->
                 runCatching {
-                    n.addItem(asItem(file))
+                    n.addItem(contentItemFactory.create(file, pathBuilder.build(file)))
                 }.recover {
                     logger.warn(it.message)
                 }
@@ -102,15 +68,5 @@ class NextcloudDB(
 
     fun maxMtime(): Long = filecacheRepository.findFirstByOrderByStorageMtimeDesc().storageMtime
 
-    private fun buildPath(f: Filecache): String {
-        return if (storageUsersMap.containsKey(f.storage)) {
-            val userName: String? = storageUsersMap[f.storage]
-            "${nextcloudConfig.nextcloudDir.absolutePath}/$userName/${f.path}"
-        } else {
-            "${nextcloudConfig.nextcloudDir.absolutePath}/${f.path}"
-        }
-    }
-
     companion object : KLogging()
 }
-

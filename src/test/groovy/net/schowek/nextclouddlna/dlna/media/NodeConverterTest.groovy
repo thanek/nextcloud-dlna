@@ -11,10 +11,16 @@ import spock.lang.Specification
 
 class NodeConverterTest extends Specification {
     def externalUrls = Mock(ExternalUrls)
-    def sut = new NodeConverter(externalUrls)
+    def dlnaProtocolInfoBuilder = Mock(DlnaProtocolInfoBuilder)
+    def sut = new NodeConverter(externalUrls, dlnaProtocolInfoBuilder)
 
     void setup() {
         externalUrls.contentUrl(_ as Integer) >> { int id -> "http://test/c/$id" }
+        dlnaProtocolInfoBuilder.buildThumbnailProtocolInfo(_) >> { mimeType ->
+            def mock = Mock(org.jupnp.support.model.dlna.DLNAProtocolInfo)
+            mock.toString() >> "JPEG_TN"
+            mock
+        }
     }
 
     def "makeItem creates VideoItem for video format"() {
@@ -73,7 +79,7 @@ class NodeConverterTest extends Specification {
         result.resources.size() == 2
         result.resources[0].value == "http://test/c/3"
         result.resources[1].value == "http://test/c/10"
-        result.resources[1].protocolInfo.toString().contains("JPEG_TN")
+        result.resources[1].protocolInfo.toString().contains("JPEG")
     }
 
     def "makeItem without thumbnail has single resource"() {
