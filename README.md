@@ -6,6 +6,7 @@ DLNA addon for your self-hosted Nextcloud app instance that allows you to stream
 devices in your network.
 It supports the group folders as well.
 Supports client-requested sorting of browse results by title, date, and media type (`dc:title`, `dc:date`, `upnp:class`).
+Clients that don't request any sorting get the results sorted by title (configurable, see [Default sort order](#default-sort-order)).
 
 ## Running in Docker
 
@@ -57,6 +58,7 @@ Available env variables with their default values that you can overwrite:
 | NEXTCLOUD_DLNA_SERVER_PORT   | 8080           | port on which the contentController will listen                                                               |
 | NEXTCLOUD_DLNA_INTERFACE     |                | (optional) interface the server will be listening on<br/>if not given, the default local address will be used |
 | NEXTCLOUD_DLNA_FRIENDLY_NAME | Nextcloud-DLNA | friendly name of the DLNA service                                                                             |
+| NEXTCLOUD_DLNA_DEFAULT_SORT  | +dc:title      | sort order used for clients that don't request one (see Default sort order)                                   |
 | NEXTCLOUD_DATA_DIR           |                | nextcloud installation directory (that ends with /data)                                                       |
 | NEXTCLOUD_SCANNED_FOLDERS    | /**            | folders to be exposed by the DLNA service (use Glob Pattern to enumerate your folders)                        |
 | NEXTCLOUD_DB_TYPE            | mariadb        | nextcloud database type (mysql, mariadb, postgres)                                                            |
@@ -65,6 +67,25 @@ Available env variables with their default values that you can overwrite:
 | NEXTCLOUD_DB_NAME            | nextcloud      | nextcloud database name                                                                                       |
 | NEXTCLOUD_DB_USER            | nextcloud      | nextcloud database username                                                                                   |
 | NEXTCLOUD_DB_PASS            | nextcloud      | nextcloud database password                                                                                   |
+
+### Default sort order
+Many client devices (TVs in particular) browse without asking the server for any particular order. Those clients get the
+results sorted by `NEXTCLOUD_DLNA_DEFAULT_SORT`, which is a comma separated list of UPnP sort criteria, each of them
+prefixed with `+` (ascending) or `-` (descending):
+
+| criterion    | meaning                                                       |
+|--------------|---------------------------------------------------------------|
+| `dc:title`   | file/folder name (case insensitive)                           |
+| `dc:date`    | modification time                                             |
+| `upnp:class` | media type (audio, then image, then video)                    |
+
+Examples:
+`NEXTCLOUD_DLNA_DEFAULT_SORT="-dc:date"` - newest files first
+`NEXTCLOUD_DLNA_DEFAULT_SORT="+upnp:class,+dc:title"` - group by media type, then by name
+`NEXTCLOUD_DLNA_DEFAULT_SORT=""` - no default sorting (the order comes from the Nextcloud database and may change over time)
+
+Sort criteria requested by the client always take precedence over the default ones. Folders are sorted by name whenever
+none of the criteria applies to them (they have no date nor media type).
 
 ### Scanned Folders
 By default nextcloud-dlna scans all the folders that are available to serve, i.e. all users' folders and all global 
