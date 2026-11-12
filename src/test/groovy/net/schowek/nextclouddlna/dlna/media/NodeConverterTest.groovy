@@ -3,7 +3,10 @@ package net.schowek.nextclouddlna.dlna.media
 import net.schowek.nextclouddlna.nextcloud.content.ContentItem
 import net.schowek.nextclouddlna.nextcloud.content.ContentNode
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
+import net.schowek.nextclouddlna.nextcloud.content.Thumbnail
 import net.schowek.nextclouddlna.util.ExternalUrls
+import org.jupnp.support.model.DIDLObject
+import org.jupnp.support.model.dlna.DLNAProfiles
 import org.jupnp.support.model.item.AudioItem
 import org.jupnp.support.model.item.ImageItem
 import org.jupnp.support.model.item.VideoItem
@@ -12,10 +15,13 @@ import spock.lang.Specification
 class NodeConverterTest extends Specification {
     def externalUrls = Mock(ExternalUrls)
     def dlnaProtocolInfoBuilder = Mock(DlnaProtocolInfoBuilder)
-    def sut = new NodeConverter(externalUrls, dlnaProtocolInfoBuilder)
+    def dlnaProfileResolver = Mock(DlnaProfileResolver)
+    def sut = new NodeConverter(externalUrls, dlnaProtocolInfoBuilder, dlnaProfileResolver)
 
     void setup() {
         externalUrls.contentUrl(_ as Integer) >> { int id -> "http://test/c/$id" }
+        externalUrls.thumbnailUrl(_ as Integer) >> { int id -> "http://test/t/$id" }
+        dlnaProfileResolver.resolveThumbnailProfile("image/jpeg") >> DLNAProfiles.JPEG_TN
         dlnaProtocolInfoBuilder.buildThumbnailProtocolInfo(_) >> { mimeType ->
             def mock = Mock(org.jupnp.support.model.dlna.DLNAProtocolInfo)
             mock.toString() >> "JPEG_TN"
@@ -68,9 +74,8 @@ class NodeConverterTest extends Specification {
 
     def "makeItem includes thumbnail as second resource with DLNA thumbnail profile"() {
         given:
-        def thumb = new ContentItem(10, 3, "thumb.jpg", "/thumb/thumb.jpg", MediaFormat.JPEG, 50L, 0L)
         def item = new ContentItem(3, 0, "photo.jpg", "/path/photo.jpg", MediaFormat.JPEG, 200L, 0L)
-        item.thumb = thumb
+        item.thumb = new Thumbnail(3, "/thumb/256-256.jpg", MediaFormat.JPEG, 50L, 256, 256)
 
         when:
         def result = sut.makeItem(item)
@@ -78,8 +83,22 @@ class NodeConverterTest extends Specification {
         then:
         result.resources.size() == 2
         result.resources[0].value == "http://test/c/3"
-        result.resources[1].value == "http://test/c/10"
+        result.resources[1].value == "http://test/t/3"
+        result.resources[1].size == 50L
         result.resources[1].protocolInfo.toString().contains("JPEG")
+    }
+
+    def "makeItem exposes thumbnail as album art with DLNA profile id"() {
+        given:
+        def item = new ContentItem(3, 0, "movie.mp4", "/path/movie.mp4", MediaFormat.MP4, 200L, 0L)
+        item.thumb = new Thumbnail(3, "/thumb/256-256.jpg", MediaFormat.JPEG, 50L, 256, 256)
+
+        when:
+        def albumArt = sut.makeItem(item).getLastProperty(DIDLObject.Property.UPNP.ALBUM_ART_URI)
+
+        then:
+        albumArt.value.toString() == "http://test/t/3"
+        albumArt.getAttribute("profileID").value.value == "JPEG_TN"
     }
 
     def "makeItem without thumbnail has single resource"() {
@@ -91,6 +110,7 @@ class NodeConverterTest extends Specification {
 
         then:
         result.resources.size() == 1
+        !result.hasProperty(DIDLObject.Property.UPNP.ALBUM_ART_URI)
     }
 
     def "makeContainerWithoutSubContainers maps node fields correctly"() {

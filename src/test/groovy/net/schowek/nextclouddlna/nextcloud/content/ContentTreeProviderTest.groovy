@@ -21,7 +21,7 @@ class ContentTreeProviderTest extends Specification {
         nextcloudDB = Mock(NextcloudDB)
         nextcloudDB.mainNodes() >> []
         nextcloudDB.groupFolders() >> []
-        nextcloudDB.processThumbnails(_ as Consumer<ContentItem>) >> null
+        nextcloudDB.processThumbnails(_ as Consumer<Thumbnail>) >> null
     }
 
     def "should rebuild tree if it's outdated"() {
@@ -48,6 +48,31 @@ class ContentTreeProviderTest extends Specification {
         false | now()                | now()             | now().plus(1, DAYS)  || true
         false | now().plus(1, DAYS)  | now()             | now().minus(1, DAYS) || true
         false | now().minus(1, DAYS) | now()             | now().minus(1, DAYS) || false
+    }
+
+    def "attaches the best thumbnail to items without exposing it as a separate item"() {
+        given:
+        def db = Mock(NextcloudDB)
+        def root = new ContentNode(2, 1, "john")
+        db.mainNodes() >> [root]
+        db.groupFolders() >> []
+        db.appendChildren(root) >> {
+            root.addItem(new ContentItem(13, 2, "movie.mp4", "/movie.mp4", MediaFormat.MP4, 100L, 0L))
+            root.addItem(new ContentItem(14, 2, "song.mp3", "/song.mp3", MediaFormat.MP3, 100L, 0L))
+        }
+        db.processThumbnails(_) >> { Consumer<Thumbnail> consumer ->
+            consumer.accept(new Thumbnail(13, "/p/13/1000-563-max.jpg", MediaFormat.JPEG, 28820L, 1000, 563))
+            consumer.accept(new Thumbnail(13, "/p/13/455-256.jpg", MediaFormat.JPEG, 9399L, 455, 256))
+            consumer.accept(new Thumbnail(99, "/p/99/256-256.jpg", MediaFormat.JPEG, 100L, 256, 256))
+        }
+
+        when:
+        def sut = new ContentTreeProvider(db, Clock.systemUTC(), ["/**"])
+
+        then:
+        sut.getItem("13").thumb.path == "/p/13/455-256.jpg"
+        sut.getItem("14").thumb == null
+        sut.getItem("99") == null
     }
 
     def "shouldAddNode matches top-level folder against scanned patterns"() {

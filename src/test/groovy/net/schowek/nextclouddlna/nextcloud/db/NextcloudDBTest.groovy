@@ -48,7 +48,7 @@ class NextcloudDBTest extends Specification {
         sut = new NextcloudDB(
                 configDiscovery, filecacheRepository, groupFolderRepository,
                 mimetypeResolver, storageUserMapper, pathBuilder,
-                contentItemFactory, thumbnailProcessor
+                contentItemFactory, [thumbnailProcessor]
         )
     }
 

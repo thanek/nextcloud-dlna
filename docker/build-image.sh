@@ -1,8 +1,13 @@
 #!/bin/bash
+set -euo pipefail
+
+builder=multi-platform-builder
+platforms=linux/arm/v7,linux/arm64/v8,linux/amd64
+image=thanek/nextcloud-dlna
 
 dir=$(realpath "$(dirname "$0")")
 
-cd "$dir/../" || exit
+cd "$dir/../"
 
 version=$(./gradlew currentVersion | grep "Project version" | awk -F"version: " '{ print $2 }')
 
@@ -13,25 +18,17 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit
 fi
 
-./gradlew clean build || exit
+./gradlew clean build
 
-docker buildx create \
-  --use \
-  --platform=linux/arm/v7,linux/arm64/v8,linux/amd64 \
-  --name multi-platform-builder
+docker buildx inspect "$builder" >/dev/null 2>&1 \
+  || docker buildx create --name "$builder" --platform="$platforms"
 
-docker buildx inspect --bootstrap
+docker buildx inspect --builder="$builder" --bootstrap
 
 docker buildx build \
+  --builder="$builder" \
   --push \
-  --platform=linux/arm/v7,linux/arm64/v8,linux/amd64 \
+  --platform="$platforms" \
   --file=./docker/Dockerfile \
-  --tag=thanek/nextcloud-dlna:$version .
-
-docker buildx build \
-  --push \
-  --platform=linux/arm/v7,linux/arm64/v8,linux/amd64 \
-  --file=./docker/Dockerfile \
-  --tag=thanek/nextcloud-dlna .
-
-cd - || exit
+  --tag="$image:$version" \
+  --tag="$image" .
