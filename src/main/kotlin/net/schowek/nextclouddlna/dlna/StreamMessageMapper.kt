@@ -45,14 +45,9 @@ class StreamMessageMapper {
     }
 
     private fun upnpHeaders(request: HttpServletRequest): UpnpHeaders {
-        val headers = mutableMapOf<String, List<String>>()
-        request.headerNames?.let {
-            while (it.hasMoreElements()) {
-                with(it.nextElement()) {
-                    headers[this] = listOf(request.getHeader(this))
-                }
-            }
-        }
+        val headers = request.headerNames?.asSequence()?.associateWith { name ->
+            listOf(request.getHeader(name))
+        }?.toMutableMap() ?: mutableMapOf()
         return UpnpHeaders(headers)
     }
 

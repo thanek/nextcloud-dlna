@@ -32,6 +32,14 @@ class ContentDirectorySortingIntTest extends UpnpAwareSpecification {
         didl.containers.collect { it.title } == ["family folder", "janedoe", "johndoe"]
     }
 
+    def "should sort by the default criteria when the client requests no sort"() {
+        when: "a client that does not support sorting browses the root"
+        def didl = browse("0", "")
+
+        then: "containers come back in the configured default order (+dc:title), not in the content tree order"
+        didl.containers.collect { it.title } == ["family folder", "janedoe", "johndoe"]
+    }
+
     def "should sort containers by title descending (-dc:title)"() {
         when:
         def didl = browse("0", "-dc:title")

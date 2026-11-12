@@ -136,7 +136,7 @@ class UpnpControllerIntTest extends UpnpAwareSpecification {
         when:
         def didl = extractDIDLFromResponse(response)
 
-        then:
+        then: "containers are returned in the default order, as the request carried no sort criteria"
         didl.containers.size() == 3
         didl.containers.each {
             assert it.searchable
@@ -146,10 +146,10 @@ class UpnpControllerIntTest extends UpnpAwareSpecification {
         }
 
         with(didl.containers[0]) {
-            assert id == "2"
-            assert parentID == "1"
-            assert title == "johndoe"
-            assert childCount == 3
+            assert id == "586"
+            assert parentID == "584"
+            assert title == "family folder"
+            assert childCount == 1
         }
 
         with(didl.containers[1]) {
@@ -160,10 +160,10 @@ class UpnpControllerIntTest extends UpnpAwareSpecification {
         }
 
         with(didl.containers[2]) {
-            assert id == "586"
-            assert parentID == "584"
-            assert title == "family folder"
-            assert childCount == 1
+            assert id == "2"
+            assert parentID == "1"
+            assert title == "johndoe"
+            assert childCount == 3
         }
 
         didl.items.size() == 0
