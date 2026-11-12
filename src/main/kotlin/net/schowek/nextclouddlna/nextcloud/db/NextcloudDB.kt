@@ -2,7 +2,7 @@ package net.schowek.nextclouddlna.nextcloud.db
 
 import mu.KLogging
 import net.schowek.nextclouddlna.nextcloud.config.NextcloudConfigDiscovery
-import net.schowek.nextclouddlna.nextcloud.content.ContentItem
+import net.schowek.nextclouddlna.nextcloud.content.Thumbnail
 import net.schowek.nextclouddlna.nextcloud.content.ContentNode
 import org.springframework.dao.InvalidDataAccessResourceUsageException
 import org.springframework.stereotype.Component
@@ -19,10 +19,11 @@ class NextcloudDB(
     private val storageUserMapper: StorageUserMapper,
     private val pathBuilder: PathBuilder,
     private val contentItemFactory: ContentItemFactory,
-    private val thumbnailProcessor: ThumbnailProcessor
+    private val thumbnailProcessors: List<ThumbnailProcessor>
 ) {
     @Transactional(readOnly = true)
-    fun processThumbnails(thumbConsumer: Consumer<ContentItem>) = thumbnailProcessor.process(thumbConsumer)
+    fun processThumbnails(thumbConsumer: Consumer<Thumbnail>) =
+        thumbnailProcessors.forEach { it.process(thumbConsumer) }
 
     fun mainNodes(): List<ContentNode> =
         filecacheRepository.mainNodes().map { o ->

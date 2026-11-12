@@ -245,8 +245,13 @@ class UpnpControllerIntTest extends UpnpAwareSpecification {
                 assert thumbnail.protocolInfo.contentFormat == "image/jpeg"
                 assert thumbnail.protocolInfo.protocol == HTTP_GET
                 assert thumbnail.protocolInfo.additionalInfo == "DLNA.ORG_PN=JPEG_TN"
-                assert thumbnail.size == 28820
-                assert thumbnail.value == urlWithPort("/c/273")
+                assert thumbnail.size == 9399
+                assert thumbnail.value == urlWithPort("/t/13")
+            }
+
+            with(getLastProperty(DIDLObject.Property.UPNP.ALBUM_ART_URI)) { albumArt ->
+                assert albumArt.value.toString() == urlWithPort("/t/13")
+                assert albumArt.getAttribute("profileID").value.value == "JPEG_TN"
             }
         }
 
@@ -268,8 +273,42 @@ class UpnpControllerIntTest extends UpnpAwareSpecification {
                 assert thumbnail.protocolInfo.protocol == HTTP_GET
                 assert thumbnail.protocolInfo.additionalInfo == "DLNA.ORG_PN=PNG_TN"
                 assert thumbnail.size == 50545
-                assert thumbnail.value == urlWithPort("/c/164")
+                assert thumbnail.value == urlWithPort("/t/14")
+            }
+
+            with(getLastProperty(DIDLObject.Property.UPNP.ALBUM_ART_URI)) { albumArt ->
+                assert albumArt.value.toString() == urlWithPort("/t/14")
+                assert albumArt.getAttribute("profileID").value.value == "PNG_TN"
             }
         }
+    }
+
+    def "should pick thumbnails from both filecache and the Nextcloud 33+ previews table"() {
+        when:
+        def photos = extractDIDLFromResponse(performContentDirectoryAction("15", "BrowseDirectChildren"))
+        def pictures = extractDIDLFromResponse(performContentDirectoryAction("396", "BrowseDirectChildren"))
+
+        then: "the closest preview to thumbnail size wins regardless of where Nextcloud keeps it"
+        thumbnailOf(photos, "16").size == 35251
+        thumbnailOf(photos, "17").size == 53672
+        thumbnailOf(pictures, "397").size == 14451
+
+        and: "previews kept in object store or tied to file versions are ignored"
+        pictures.items.find { it.id == "398" }.resources.size() == 1
+        !pictures.items.find { it.id == "398" }.hasProperty(DIDLObject.Property.UPNP.ALBUM_ART_URI)
+
+        and: "every advertised thumbnail can be downloaded"
+        (photos.items + pictures.items).findAll { it.resources.size() > 1 }.each { item ->
+            def response = restTemplate().getForEntity(item.resources[1].value, byte[])
+            assert response.statusCode == HttpStatus.OK
+            assert response.body.length == item.resources[1].size
+        }
+    }
+
+    private static def thumbnailOf(didl, String itemId) {
+        def item = didl.items.find { it.id == itemId }
+        assert item.resources.size() == 2
+        assert item.resources[1].value.endsWith("/t/$itemId")
+        item.resources[1]
     }
 }

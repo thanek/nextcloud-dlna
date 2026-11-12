@@ -4,6 +4,7 @@ import net.schowek.nextclouddlna.dlna.media.DlnaProtocolInfoBuilder
 import net.schowek.nextclouddlna.nextcloud.content.ContentItem
 import net.schowek.nextclouddlna.nextcloud.content.ContentTreeProvider
 import net.schowek.nextclouddlna.nextcloud.content.MediaFormat
+import net.schowek.nextclouddlna.nextcloud.content.Thumbnail
 import org.jupnp.support.model.dlna.DLNAProtocolInfo
 import org.springframework.core.io.FileSystemResource
 import spock.lang.Specification
@@ -57,5 +58,45 @@ class ContentControllerTest extends Specification {
 
         cleanup:
         file.delete()
+    }
+
+    def "getThumbnail serves the item's thumbnail file"() {
+        given:
+        def file = File.createTempFile("thumb", ".jpg")
+        def item = new ContentItem(3, 0, "photo.jpg", "/photo.jpg", MediaFormat.JPEG, 200L, 0L)
+        item.thumb = new Thumbnail(3, file.absolutePath, MediaFormat.JPEG, 50L, 256, 256)
+        def response = Mock(jakarta.servlet.http.HttpServletResponse)
+        def protocolInfo = Mock(DLNAProtocolInfo)
+        protocolInfo.toString() >> "DLNA.ORG_PN=JPEG_TN"
+        contentTreeProvider.getItem("3") >> item
+        dlnaProtocolInfoBuilder.buildThumbnailProtocolInfo(MediaFormat.JPEG.asMimetype()) >> protocolInfo
+
+        when:
+        def result = sut.getThumbnail("3", response)
+
+        then:
+        result.statusCode.value == 200
+        result.body.path == file.absolutePath
+        1 * response.addHeader("Content-Type", "image/jpeg")
+        1 * response.addHeader("contentFeatures.dlna.org", "DLNA.ORG_PN=JPEG_TN")
+        1 * response.addHeader("transferMode.dlna.org", "Interactive")
+
+        cleanup:
+        file.delete()
+    }
+
+    def "getThumbnail returns NOT_FOUND when item has no thumbnail or its file is missing"() {
+        given:
+        def withoutThumb = new ContentItem(1, 0, "song.mp3", "/song.mp3", MediaFormat.MP3, 1L, 0L)
+        def withMissingFile = new ContentItem(2, 0, "photo.jpg", "/photo.jpg", MediaFormat.JPEG, 1L, 0L)
+        withMissingFile.thumb = new Thumbnail(2, "/nonexistent/256-256.jpg", MediaFormat.JPEG, 1L, 256, 256)
+        contentTreeProvider.getItem("1") >> withoutThumb
+        contentTreeProvider.getItem("2") >> withMissingFile
+
+        expect:
+        sut.getThumbnail(id, Mock(jakarta.servlet.http.HttpServletResponse)).statusCode.value == 404
+
+        where:
+        id << ["1", "2", "999"]
     }
 }

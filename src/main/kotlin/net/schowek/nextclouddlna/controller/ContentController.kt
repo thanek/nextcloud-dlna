@@ -44,6 +44,30 @@ class ContentController(
         }
     }
 
+    @RequestMapping(method = [RequestMethod.GET, RequestMethod.HEAD], value = ["/t/{id}"])
+    @ResponseBody
+    fun getThumbnail(
+        @PathVariable("id") id: String,
+        response: HttpServletResponse
+    ): ResponseEntity<FileSystemResource> {
+        val thumb = contentTreeProvider.getItem(id)?.thumb ?: let {
+            logger.info("Could not find thumbnail for item id: $id")
+            return ResponseEntity(HttpStatus.NOT_FOUND)
+        }
+        val fileSystemResource = FileSystemResource(thumb.path)
+        if (!fileSystemResource.exists()) {
+            logger.info("Could not find thumbnail file ${fileSystemResource.path} for item id: $id")
+            return ResponseEntity(HttpStatus.NOT_FOUND)
+        }
+        response.addHeader("Content-Type", thumb.format.mime)
+        response.addHeader(
+            "contentFeatures.dlna.org",
+            dlnaProtocolInfoBuilder.buildThumbnailProtocolInfo(thumb.format.asMimetype()).toString()
+        )
+        response.addHeader("transferMode.dlna.org", "Interactive")
+        return ResponseEntity(fileSystemResource, HttpStatus.OK)
+    }
+
     @RequestMapping(method = [RequestMethod.GET], value = ["/rebuild"])
     @ResponseBody
     fun reloadTree(): ResponseEntity<*> {

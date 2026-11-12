@@ -10,8 +10,6 @@ import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.time.Clock
 import java.time.Instant
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.regex.Pattern
 
 
 @Component
@@ -90,28 +88,10 @@ class ContentTreeProvider(
 
     private fun loadThumbnails(tree: ContentTree) {
         logger.info("Loading thumbnails...")
-        val thumbsCount = AtomicInteger()
         nextcloudDB.processThumbnails { thumb ->
-            getItemIdForThumbnail(thumb)?.let { id ->
-                tree.getItem(id)?.let { item ->
-                    item.thumb ?: let {
-                        logger.debug("Adding thumbnail for item {}: {}", id, thumb)
-                        item.thumb = thumb
-                        tree.addItem(thumb)
-                        thumbsCount.getAndIncrement()
-                    }
-                }
-            }
+            tree.getItem("${thumb.itemId}")?.offerThumbnail(thumb)
         }
-        logger.info("Found {} thumbnails", thumbsCount)
-    }
-
-    private fun getItemIdForThumbnail(thumb: ContentItem): String? {
-        val pattern = Pattern.compile("^.*/preview(/[0-9a-f])+/(\\d+)/\\w+")
-        val matcher = pattern.matcher(thumb.path)
-        return if (matcher.find()) {
-            matcher.group(matcher.groupCount())
-        } else null
+        logger.info("Found thumbnails for {} items", tree.itemsWithThumbnailCount)
     }
 
     private fun fillNode(node: ContentNode, tree: ContentTree) {
@@ -154,6 +134,7 @@ class ContentTree {
 
     val itemsCount get() = items.size
     val nodesCount get() = nodes.size
+    val itemsWithThumbnailCount get() = items.values.count { it.thumb != null }
 
     fun getNode(id: String) = nodes[id]
     fun getItem(id: String) = items[id]

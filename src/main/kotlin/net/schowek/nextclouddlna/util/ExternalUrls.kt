@@ -18,5 +18,6 @@ class ExternalUrls(
     val selfURI: URI get() = URI(selfUriString)
 
     fun contentUrl(id: Int) = "$selfUriString/c/$id"
+    fun thumbnailUrl(itemId: Int) = "$selfUriString/t/$itemId"
 }
 

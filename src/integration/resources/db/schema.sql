@@ -74,3 +74,25 @@ CREATE INDEX `mounts_mount_id_index` ON oc_mounts(`mount_id`);
 CREATE INDEX `mounts_user_root_path_index` ON oc_mounts(`user_id`,`root_id`,`mount_point`);
 CREATE INDEX `mounts_class_index` ON oc_mounts(`mount_provider_class`);
 CREATE INDEX `mount_user_storage` ON oc_mounts(`storage_id`,`user_id`);
+
+DROP TABLE IF EXISTS oc_previews;
+CREATE TABLE `oc_previews` (
+  `id` NUMERIC(20) NOT NULL,
+  `file_id` NUMERIC(20) NOT NULL,
+  `storage_id` NUMERIC(20) NOT NULL,
+  `old_file_id` NUMERIC(20) DEFAULT NULL,
+  `location_id` NUMERIC(20) DEFAULT NULL,
+  `width` INTEGER NOT NULL,
+  `height` INTEGER NOT NULL,
+  `mimetype_id` INTEGER NOT NULL,
+  `source_mimetype_id` INTEGER NOT NULL,
+  `max` BOOLEAN NOT NULL DEFAULT FALSE,
+  `cropped` BOOLEAN NOT NULL DEFAULT FALSE,
+  `encrypted` BOOLEAN NOT NULL DEFAULT FALSE,
+  `etag` CHAR(40) NOT NULL,
+  `mtime` INTEGER NOT NULL,
+  `size` INTEGER NOT NULL,
+  `version_id` NUMERIC(20) NOT NULL DEFAULT -1,
+  PRIMARY KEY (`id`)
+);
+CREATE INDEX `previews_file_id_idx` ON oc_previews(`file_id`);
